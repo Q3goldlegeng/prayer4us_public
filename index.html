@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我陪您禱告</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-1016578187"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-1016578187');
+</script>
+<body>
+    <h1>我陪您禱告</h1>
+    <div id="buttons">
+        <!-- 移除原有按鈕，改為動態生成 -->
+        <div id="mainEmotions"></div>
+        <div id="secondaryEmotions" style="display: none;"></div>
+        <button onclick="showPreviousEmotions()" style="display: none; background-color: #666;" id="backButton">↩ 上一個情緒列表</button>
+        <div id="verse" style="margin-top: 30px;"></div>
+    </div>
+
+    <!-- 環境變數設置 -->
+    <script>
+        // 創建一個空的環境變數對象，以防 .env.js 不存在
+        window.ENV = window.ENV || {};
+    </script>
+    <!-- 嘗試載入環境變數文件（本地開發用） -->
+  <!  <script src=".env.js" onerror="console.warn('未找到 .env.js 文件，這在生產環境中是正常的')"></script>
+    <script src="js/env-config.js"></script>
+    <script src="js/translations.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+      </script>
+      <script defer src="/_vercel/speed-insights/script.js"></script>
+    <script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<!<script defer src="/_vercel/insights/script.js"></script>
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="https://sites.google.com/view/prayer4us/english" target="_blank">About Prayer4Us</a>
+    </div>
+</body>
+</html>

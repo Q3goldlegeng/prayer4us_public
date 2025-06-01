@@ -1,0 +1,443 @@
+body {
+    font-family: "Microsoft JhengHei", Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+    color: #2c3e50;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-image: url('https://images.unsplash.com/photo-1501696461415-6bd6660c6742?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.85);
+    z-index: -1;
+}
+
+h1 {
+    color: #3a506b;
+    margin-top: 40px;
+    font-size: 2.5rem;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+    font-weight: 700;
+    letter-spacing: 1px;
+    background: linear-gradient(45deg, #3a506b, #5e6b7e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    padding: 10px 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+#buttons {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+button {
+    margin: 10px;
+    padding: 14px 28px;
+    font-size: 16px;
+    border-radius: 30px;
+    border: none;
+    background: linear-gradient(135deg, #6a85b6 0%, #bac8e0 100%);
+    color: white;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(106, 133, 182, 0.4);
+}
+
+button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 20px rgba(106, 133, 182, 0.6);
+    background: linear-gradient(135deg, #5d7cad 0%, #a9b9d6 100%);
+}
+
+button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 10px rgba(106, 133, 182, 0.4);
+}
+
+#verse {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    margin: 30px auto;
+    max-width: 800px;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+#verse::before {
+    content: """;
+    position: absolute;
+    top: -30px;
+    left: 20px;
+    font-size: 100px;
+    color: rgba(106, 133, 182, 0.2);
+    font-family: Georgia, serif;
+}
+
+#verse::after {
+    content: """;
+    position: absolute;
+    bottom: -80px;
+    right: 20px;
+    font-size: 100px;
+    color: rgba(106, 133, 182, 0.2);
+    font-family: Georgia, serif;
+}
+
+#verse p {
+    margin: 20px 0;
+    padding: 15px 25px;
+    border-left: 4px solid #bac8e0;
+    text-align: left;
+    transition: all 0.3s ease;
+    background-color: rgba(245, 247, 250, 0.7);
+    border-radius: 0 10px 10px 0;
+    line-height: 1.6;
+}
+
+#verse p:hover {
+    border-left-color: #6a85b6;
+    background-color: rgba(245, 247, 250, 0.9);
+    transform: translateX(5px);
+}
+
+#verse strong {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+    color: #3a506b;
+    letter-spacing: 0.5px;
+}
+
+#verse h3 {
+    color: #3a506b;
+    font-size: 1.5rem;
+    margin-bottom: 25px;
+    text-align: center;
+    font-weight: 700;
+    position: relative;
+    display: inline-block;
+}
+
+#verse h3::after {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, #6a85b6, #bac8e0);
+    border-radius: 3px;
+}
+
+/* 優化播放器外觀 */
+#elevenlabs-audionative-widget {
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    background: #f8f9fa;
+    border: 1px solid rgba(106, 133, 182, 0.3);
+}
+
+#elevenlabs-audionative-widget a {
+    color: #6a85b6;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+#elevenlabs-audionative-widget a:hover {
+    color: #3a506b;
+    text-decoration: underline;
+}
+
+#play-button {
+    transition: all 0.3s ease;
+    padding: 12px 24px;
+    border-radius: 30px;
+    background: linear-gradient(135deg, #6a85b6 0%, #bac8e0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#play-button:hover {
+    background: linear-gradient(135deg, #5d7cad 0%, #a9b9d6 100%);
+    transform: scale(1.05);
+}
+
+/* 自定義情緒輸入框樣式 */
+#customEmotionInput {
+    width: 100%;
+    min-height: 120px;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #bac8e0;
+    font-family: inherit;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    resize: vertical;
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+#customEmotionInput:focus {
+    outline: none;
+    border-color: #6a85b6;
+    box-shadow: 0 0 12px rgba(106, 133, 182, 0.5);
+}
+
+#prayer-audio {
+    background: rgba(248, 249, 250, 0.9);
+    border-radius: 12px;
+    padding: 15px;
+    width: 100%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(106, 133, 182, 0.3);
+}
+
+/* 語言選擇器樣式 */
+#languageContainer {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 8px 15px;
+    border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    border: 1px solid rgba(106, 133, 182, 0.3);
+    backdrop-filter: blur(5px);
+}
+
+#languageSelector {
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid #bac8e0;
+    background-color: white;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #3a506b;
+    font-size: 14px;
+}
+
+#languageSelector:hover {
+    border-color: #6a85b6;
+    box-shadow: 0 0 8px rgba(106, 133, 182, 0.3);
+}
+
+#languageSelector:focus {
+    outline: none;
+    border-color: #6a85b6;
+    box-shadow: 0 0 8px rgba(106, 133, 182, 0.5);
+}
+
+/* 經文段落樣式 */
+#verse p:nth-of-type(1) {
+    color: #2c3e50;
+    border-left-color: #6a85b6;
+    background-color: rgba(245, 247, 250, 0.8);
+    position: relative;
+}
+
+#verse p:nth-of-type(1)::before {
+    content: "📖";
+    position: absolute;
+    left: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+}
+
+/* 說明段落樣式 */
+#verse p:nth-of-type(2) {
+    color: #27ae60;
+    border-left-color: #2ecc71;
+    background-color: rgba(240, 255, 244, 0.8);
+    position: relative;
+}
+
+#verse p:nth-of-type(2)::before {
+    content: "💡";
+    position: absolute;
+    left: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+}
+
+/* 禱告詞段落樣式 */
+#verse p:nth-of-type(3) {
+    color: #2980b9;
+    border-left-color: #9b59b6;
+    background-color: rgba(240, 248, 255, 0.8);
+    position: relative;
+}
+
+#verse p:nth-of-type(3)::before {
+    content: "🙏";
+    position: absolute;
+    left: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+}
+
+/* 音頻播放器容器樣式 */
+#audio-player {
+    background-color: rgba(245, 247, 250, 0.8);
+    border-radius: 12px;
+    padding: 15px;
+    margin: 20px 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(106, 133, 182, 0.3);
+}
+
+/* 聲音選擇器樣式 */
+#voice-selector {
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid #bac8e0;
+    background-color: white;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #3a506b;
+}
+
+#voice-selector:hover {
+    border-color: #6a85b6;
+    box-shadow: 0 0 8px rgba(106, 133, 182, 0.3);
+}
+
+#voice-selector:focus {
+    outline: none;
+    border-color: #6a85b6;
+    box-shadow: 0 0 8px rgba(106, 133, 182, 0.5);
+}
+
+/* 回到上一個情緒列表按鈕樣式 */
+#backButton {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+    box-shadow: 0 4px 15px rgba(127, 140, 141, 0.4);
+}
+
+#backButton:hover {
+    background: linear-gradient(135deg, #7f8c8d 0%, #6d7b7c 100%);
+    box-shadow: 0 7px 20px rgba(127, 140, 141, 0.6);
+}
+
+/* 其他狀況按鈕樣式 */
+button[style*="background-color: #2196F3"] {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+}
+
+button[style*="background-color: #2196F3"]:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #2471a3 100%) !important;
+    box-shadow: 0 7px 20px rgba(52, 152, 219, 0.6);
+}
+
+/* 加載中樣式 */
+.loading-verse {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 200px !important;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    h1 {
+        font-size: 2rem;
+        margin-top: 30px;
+    }
+    
+    #buttons {
+        padding: 15px;
+        width: 90%;
+    }
+    
+    button {
+        padding: 12px 20px;
+        font-size: 14px;
+        margin: 6px;
+    }
+    
+    #verse {
+        padding: 20px;
+        margin: 20px auto;
+        width: 90%;
+    }
+    
+    #verse p {
+        padding: 12px 15px;
+    }
+    
+    #languageContainer {
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+    }
+    
+    #languageSelector {
+        padding: 5px 8px;
+        font-size: 12px;
+    }
+}
+
+/* 動畫效果 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#buttons, #verse {
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+#mainEmotions button {
+    animation: fadeIn 0.5s ease-out forwards;
+    animation-delay: calc(var(--btn-index, 0) * 0.1s);
+    opacity: 0;
+}
+
+#mainEmotions button:nth-child(1) { --btn-index: 1; }
+#mainEmotions button:nth-child(2) { --btn-index: 2; }
+#mainEmotions button:nth-child(3) { --btn-index: 3; }
+#mainEmotions button:nth-child(4) { --btn-index: 4; }
+#mainEmotions button:nth-child(5) { --btn-index: 5; }
+#mainEmotions button:nth-child(6) { --btn-index: 6; }
