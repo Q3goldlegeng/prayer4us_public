@@ -1,3 +1,15 @@
+// --- /api/counter: 簡易計數器（記憶體版，重啟會歸零） ---
+let counter = 0;
+app.get('/api/counter', (req, res) => {
+  counter++;
+  res.json({ count: counter });
+});
+
+// --- /api/env: 回傳環境變數（僅回傳安全資訊，勿回傳金鑰） ---
+app.get('/api/env', (req, res) => {
+  // 只回傳 NODE_ENV 供前端判斷環境
+  res.json({ NODE_ENV: process.env.NODE_ENV || 'production' });
+});
 require('dotenv').config();
 const express = require('express');
 const fetch = require('node-fetch');
