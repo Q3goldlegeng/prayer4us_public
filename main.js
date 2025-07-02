@@ -362,10 +362,18 @@ langSelector.addEventListener('change', function() {
 
 // 用API生成情緒列表
 async function generateEmotions(context, isFirst = false) {
-    if (!apiKey) {
+                    情境：${context}
+                    範例輸出：${currentLanguage === 'en' ? 'Anxiety Sadness Loneliness Stress Joy ' + t('otherSituation') : 
+    // 優先使用 Groq API
+    let useGroq = false;
+    let groqKey = '';
+    if (window.ENV && window.ENV.GROQ_API_KEY) {
+        useGroq = true;
+        groqKey = window.ENV.GROQ_API_KEY;
+    }
+    if (!apiKey && !groqKey) {
         console.warn('API金鑰未設置，使用備用情緒列表');
-        
-        // 根據語言返回不同的備用情緒列表
+        // ...existing code...
         const fallbackEmotions = {
             'zh-Hant': ['焦慮', '悲傷', '孤獨', '壓力', '喜樂', t('otherSituation')],
             'zh-Hans': ['焦虑', '悲伤', '孤独', '压力', '喜乐', t('otherSituation')],
@@ -379,10 +387,9 @@ async function generateEmotions(context, isFirst = false) {
             'es': ['Ansiedad', 'Tristeza', 'Soledad', 'Estrés', 'Alegría', t('otherSituation')]
         };
         let result = fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
-
-        // 新增功能：用餐前的禱告、與人小組聚會的禱告
+        // ...existing code...
         if (isFirst) {
-            // 判斷是否用餐時間
+            // ...existing code...
             const now = new Date();
             const hour = now.getHours();
             let mealPrayer = null;
@@ -422,62 +429,97 @@ async function generateEmotions(context, isFirst = false) {
                                         : currentLanguage === 'es'
                                             ? 'Oración para reunión de grupo pequeño'
                                             : '與人小組聚會的禱告';
-
             if (mealPrayer && !result.includes(mealPrayer)) result.push(mealPrayer);
             if (!result.includes(groupPrayer)) result.push(groupPrayer);
         }
-
         return result;
     }
-    
+
     try {
-        const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: 'gpt-4.1-nano',
+        let emotions = [];
+        if (useGroq) {
+            // 使用 Groq API
+            const groqPrompt =
+                '參考以下情境提供5個' +
+                (currentLanguage === 'en' ? '英文' :
+                currentLanguage === 'ja' ? '日文' :
+                currentLanguage === 'ko' ? '韓文' :
+                currentLanguage === 'de' ? '德文' :
+                currentLanguage === 'fr' ? '法文' :
+                currentLanguage === 'it' ? '義大利文' :
+                currentLanguage === 'nl' ? '荷蘭文' :
+                currentLanguage === 'es' ? '西班牙文' : '中文') +
+                '最近一般人常會有的情緒狀態(不要編號)，最後加「' + t('otherSituation') + '」，用空格分隔：\n' +
+                '情境：' + context + '\n' +
+                '範例輸出：' +
+                (currentLanguage === 'en' ? 'Anxiety Sadness Loneliness Stress Joy ' + t('otherSituation') :
+                currentLanguage === 'ja' ? '不安 悲しみ 孤独 ストレス 喜び ' + t('otherSituation') :
+                currentLanguage === 'ko' ? '불안 슬픔 외로움 스트레스 기쁨 ' + t('otherSituation') :
+                currentLanguage === 'de' ? 'Angst Traurigkeit Einsamkeit Stress Freude ' + t('otherSituation') :
+                currentLanguage === 'fr' ? 'Anxiété Tristesse Solitude Stress Joie ' + t('otherSituation') :
+                currentLanguage === 'it' ? 'Ansia Tristezza Solitudine Stress Gioia ' + t('otherSituation') :
+                currentLanguage === 'nl' ? 'Angst Verdriet Eenzaamheid Stress Vreugde ' + t('otherSituation') :
+                '焦慮 悲傷 孤獨 壓力 喜樂 ' + t('otherSituation'));
+            const groqRes = await window.groqChatCompletion({
                 messages: [{
                     role: 'user',
-                    content: `參考以下情境提供5個${currentLanguage === 'en' ? '英文' : currentLanguage === 'ja' ? '日文' : currentLanguage === 'ko' ? '韓文' : currentLanguage === 'de' ? '德文' : currentLanguage === 'fr' ? '法文' : currentLanguage === 'it' ? '義大利文' : currentLanguage === 'nl' ? '荷蘭文' : currentLanguage === 'es' ? '西班牙文' : '中文'}最近一般人常會有的情緒狀態(不要編號)，最後加「${t('otherSituation')}」，用空格分隔：
-                    情境：${context}
-                    範例輸出：${currentLanguage === 'en' ? 'Anxiety Sadness Loneliness Stress Joy ' + t('otherSituation') : 
-                              currentLanguage === 'ja' ? '不安 悲しみ 孤独 ストレス 喜び ' + t('otherSituation') : 
-                              currentLanguage === 'ko' ? '불안 슬픔 외로움 스트레스 기쁨 ' + t('otherSituation') :
-                              currentLanguage === 'de' ? 'Angst Traurigkeit Einsamkeit Stress Freude ' + t('otherSituation') :
-                              currentLanguage === 'fr' ? 'Anxiété Tristesse Solitude Stress Joie ' + t('otherSituation') :
-                              currentLanguage === 'it' ? 'Ansia Tristezza Solitudine Stress Gioia ' + t('otherSituation') :
-                              currentLanguage === 'nl' ? 'Angst Verdriet Eenzaamheid Stress Vreugde ' + t('otherSituation') : 
-                              '焦慮 悲傷 孤獨 壓力 喜樂 ' + t('otherSituation')}`
+                    content: groqPrompt
                 }],
-                max_tokens: 100,
-                temperature: 0.7
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+                model: 'llama3-8b-8192',
+                apiKey: groqKey
+            });
+            if (!groqRes?.choices?.[0]?.message?.content) throw new Error('Groq API response invalid');
+            emotions = groqRes.choices[0].message.content.split(' ');
+        } else {
+            // 使用 OpenAI API
+            const openaiPrompt =
+                '參考以下情境提供5個' +
+                (currentLanguage === 'en' ? '英文' :
+                currentLanguage === 'ja' ? '日文' :
+                currentLanguage === 'ko' ? '韓文' :
+                currentLanguage === 'de' ? '德文' :
+                currentLanguage === 'fr' ? '法文' :
+                currentLanguage === 'it' ? '義大利文' :
+                currentLanguage === 'nl' ? '荷蘭文' :
+                currentLanguage === 'es' ? '西班牙文' : '中文') +
+                '最近一般人常會有的情緒狀態(不要編號)，最後加「' + t('otherSituation') + '」，用空格分隔：\n' +
+                '情境：' + context + '\n' +
+                '範例輸出：' +
+                (currentLanguage === 'en' ? 'Anxiety Sadness Loneliness Stress Joy ' + t('otherSituation') :
+                currentLanguage === 'ja' ? '不安 悲しみ 孤独 ストレス 喜び ' + t('otherSituation') :
+                currentLanguage === 'ko' ? '불안 슬픔 외로움 스트레스 기쁨 ' + t('otherSituation') :
+                currentLanguage === 'de' ? 'Angst Traurigkeit Einsamkeit Stress Freude ' + t('otherSituation') :
+                currentLanguage === 'fr' ? 'Anxiété Tristesse Solitude Stress Joie ' + t('otherSituation') :
+                currentLanguage === 'it' ? 'Ansia Tristezza Solitudine Stress Gioia ' + t('otherSituation') :
+                currentLanguage === 'nl' ? 'Angst Verdriet Eenzaamheid Stress Vreugde ' + t('otherSituation') :
+                '焦慮 悲傷 孤獨 壓力 喜樂 ' + t('otherSituation'));
+            const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4.1-nano',
+                    messages: [{
+                        role: 'user',
+                        content: openaiPrompt
+                    }],
+                    max_tokens: 100,
+                    temperature: 0.7
+                })
+            });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            if (!data?.choices?.[0]?.message?.content) throw new Error('Invalid API response structure');
+            emotions = data.choices[0].message.content.split(' ');
         }
-
-        const data = await response.json();
-        
-        if (!data?.choices?.[0]?.message?.content) {
-            throw new Error('Invalid API response structure');
-        }
-
-        const emotions = data.choices[0].message.content.split(' ');
-        
         // 過濾已使用過的情緒
         const newEmotions = emotions.filter(e => !usedEmotions.has(e));
         newEmotions.forEach(e => usedEmotions.add(e));
-
         let result = newEmotions.slice(0, 5).concat(t('otherSituation'));
-
         // 新增功能：用餐前的禱告、與人小組聚會的禱告
         if (isFirst) {
-            // 判斷是否用餐時間
             const now = new Date();
             const hour = now.getHours();
             let mealPrayer = null;
@@ -517,15 +559,13 @@ async function generateEmotions(context, isFirst = false) {
                                         : currentLanguage === 'es'
                                             ? 'Oración para reunión de grupo pequeño'
                                             : '與人小組聚會的禱告';
-
             if (mealPrayer && !result.includes(mealPrayer)) result.push(mealPrayer);
             if (!result.includes(groupPrayer)) result.push(groupPrayer);
         }
-
         return result;
     } catch (error) {
         console.error('獲取情緒列表失敗:', error);
-        // 根據語言返回不同的備用情緒列表
+        // ...existing code...
         const fallbackEmotions = {
             'zh-Hant': ['焦慮', '悲傷', '孤獨', '壓力', '喜樂', t('otherSituation')],
             'zh-Hans': ['焦虑', '悲伤', '孤独', '压力', '喜乐', t('otherSituation')],
@@ -539,10 +579,9 @@ async function generateEmotions(context, isFirst = false) {
             'es': ['Ansiedad', 'Tristeza', 'Soledad', 'Estrés', 'Alegría', t('otherSituation')]
         };
         let result = fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
-
-        // 新增功能：用餐前的禱告、與人小組聚會的禱告
+        // ...existing code...
         if (isFirst) {
-            // 判斷是否用餐時間
+            // ...existing code...
             const now = new Date();
             const hour = now.getHours();
             let mealPrayer = null;
@@ -578,11 +617,9 @@ async function generateEmotions(context, isFirst = false) {
                                     : currentLanguage === 'nl'
                                         ? 'Gebed voor kleine groepsbijeenkomst'
                                         : '與人小組聚會的禱告';
-
             if (mealPrayer && !result.includes(mealPrayer)) result.push(mealPrayer);
             if (!result.includes(groupPrayer)) result.push(groupPrayer);
         }
-
         return result;
     }
 }
@@ -1194,7 +1231,7 @@ async function playPrayer(encodedText, encodedInstructions = '') {
         playText.style.display = 'inline';
         spinner.style.display = 'none';
     }
-} // Add missing closing brace for playPrayer function
+}
 
 // 檢查API端點是否可用，如果不可用，則禁用計數器功能
 async function checkCounterEndpoint() {
