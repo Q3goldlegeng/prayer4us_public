@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "nextjs-build-to-backend-public",
+			"command": "npx next build && npx next export -o backend/public",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}

@@ -184,20 +184,10 @@ async function recordAudioGeneration(language) {
         }
     }
 }
-
-// 從環境變數中獲取API金鑰
+// 不再嘗試從前端取得 API 金鑰，所有金鑰僅由後端管理
 async function loadApiKey() {
-    try {
-        // 使用 env-config.js 中的 getApiKey 函數
-        apiKey = await window.getApiKey();
-        if (!apiKey) {
-            console.error('API金鑰未設置');
-            apiKey = ''; // 設置為空字符串，將使用備用情緒列表
-        }
-    } catch (error) {
-        console.error('無法載入環境變數:', error);
-        apiKey = ''; // 設置為空字符串，將使用備用情緒列表
-    }
+    apiKey = '';
+}
     
     // 檢測並設置用戶語言
     detectUserLanguage();
@@ -362,58 +352,36 @@ langSelector.addEventListener('change', function() {
 
 // 用API生成情緒列表
 async function generateEmotions(context, isFirst = false) {
-                    情境：${context}
-                    範例輸出：${currentLanguage === 'en' ? 'Anxiety Sadness Loneliness Stress Joy ' + t('otherSituation') : 
-    // 優先使用 Groq API
-    let useGroq = false;
-    let groqKey = '';
-    if (window.ENV && window.ENV.GROQ_API_KEY) {
-        useGroq = true;
-        groqKey = window.ENV.GROQ_API_KEY;
+    // 直接呼叫後端 API 產生情緒，不再由前端呼叫 Groq API 或檢查金鑰
+    const fallbackEmotions = {
+        'zh-Hant': ['焦慮', '悲傷', '孤獨', '壓力', '喜樂', t('otherSituation')],
+        'zh-Hans': ['焦虑', '悲伤', '孤独', '压力', '喜乐', t('otherSituation')],
+        'en': ['Anxiety', 'Sadness', 'Loneliness', 'Stress', 'Joy', t('otherSituation')],
+        'ja': ['不安', '悲しみ', '孤独', 'ストレス', '喜び', t('otherSituation')],
+        'ko': ['불안', '슬픔', '외로움', '스트레스', '기쁨', t('otherSituation')],
+        'de': ['Angst', 'Traurigkeit', 'Einsamkeit', 'Stress', 'Freude', t('otherSituation')],
+        'fr': ['Anxiété', 'Tristesse', 'Solitude', 'Stress', 'Joie', t('otherSituation')],
+        'it': ['Ansia', 'Tristezza', 'Solitudine', 'Stress', 'Gioia', t('otherSituation')],
+        'nl': ['Angst', 'Verdriet', 'Eenzaamheid', 'Stress', 'Vreugde', t('otherSituation')],
+        'es': ['Ansiedad', 'Tristeza', 'Soledad', 'Estrés', 'Alegría', t('otherSituation')]
+    };
+    try {
+        const response = await fetch('/api/prayer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic: context })
+        });
+        if (response.ok) {
+            const data = await response.json();
+            // 假設後端回傳格式為 { result: '...' }
+            // 你可以根據實際格式調整
+            return data.result;
+        } else {
+            return fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
+        }
+    } catch (e) {
+        return fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
     }
-    if (!apiKey && !groqKey) {
-        console.warn('API金鑰未設置，使用備用情緒列表');
-        // ...existing code...
-        const fallbackEmotions = {
-            'zh-Hant': ['焦慮', '悲傷', '孤獨', '壓力', '喜樂', t('otherSituation')],
-            'zh-Hans': ['焦虑', '悲伤', '孤独', '压力', '喜乐', t('otherSituation')],
-            'en': ['Anxiety', 'Sadness', 'Loneliness', 'Stress', 'Joy', t('otherSituation')],
-            'ja': ['不安', '悲しみ', '孤独', 'ストレス', '喜び', t('otherSituation')],
-            'ko': ['불안', '슬픔', '외로움', '스트레스', '기쁨', t('otherSituation')],
-            'de': ['Angst', 'Traurigkeit', 'Einsamkeit', 'Stress', 'Freude', t('otherSituation')],
-            'fr': ['Anxiété', 'Tristesse', 'Solitude', 'Stress', 'Joie', t('otherSituation')],
-            'it': ['Ansia', 'Tristezza', 'Solitudine', 'Stress', 'Gioia', t('otherSituation')],
-            'nl': ['Angst', 'Verdriet', 'Eenzaamheid', 'Stress', 'Vreugde', t('otherSituation')],
-            'es': ['Ansiedad', 'Tristeza', 'Soledad', 'Estrés', 'Alegría', t('otherSituation')]
-        };
-        let result = fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
-        // ...existing code...
-        if (isFirst) {
-            // ...existing code...
-            const now = new Date();
-            const hour = now.getHours();
-            let mealPrayer = null;
-            if ((hour >= 5 && hour < 9) || (hour >= 11 && hour < 14) || (hour >= 17 && hour < 20)) {
-                mealPrayer = currentLanguage === 'en'
-                    ? 'Prayer before meal'
-                    : currentLanguage === 'ja'
-                        ? '食事前の祈り'
-                        : currentLanguage === 'ko'
-                            ? '식사 전 기도'
-                            : currentLanguage === 'de'
-                                ? 'Gebet vor dem Essen'
-                                : currentLanguage === 'fr'
-                                    ? 'Prière avant le repas'
-                                    : currentLanguage === 'it'
-                                        ? 'Preghiera prima del pasto'
-                                        : currentLanguage === 'nl'
-                                            ? 'Gebed voor de maaltijd'
-                                            : currentLanguage === 'es'
-                                                ? 'Oración antes de comer'
-                                                : '用餐前的禱告';
-            }
-            const groupPrayer = currentLanguage === 'en'
-                ? 'Prayer for small group fellowship'
                 : currentLanguage === 'ja'
                     ? '小グループ交わりの祈り'
                     : currentLanguage === 'ko'
@@ -460,14 +428,21 @@ async function generateEmotions(context, isFirst = false) {
                 currentLanguage === 'it' ? 'Ansia Tristezza Solitudine Stress Gioia ' + t('otherSituation') :
                 currentLanguage === 'nl' ? 'Angst Verdriet Eenzaamheid Stress Vreugde ' + t('otherSituation') :
                 '焦慮 悲傷 孤獨 壓力 喜樂 ' + t('otherSituation'));
-            const groqRes = await window.groqChatCompletion({
-                messages: [{
-                    role: 'user',
-                    content: groqPrompt
-                }],
-                model: 'llama3-8b-8192',
-                apiKey: groqKey
+            // 直接呼叫後端 API 產生情緒，不再由前端呼叫 Groq API
+            const response = await fetch('/api/prayer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic: context })
             });
+            if (response.ok) {
+                const data = await response.json();
+                // 假設後端回傳格式為 { result: '...' }
+                // 你可以根據實際格式調整
+                return data.result;
+            } else {
+                // fallback
+                return fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
+            }
             if (!groqRes?.choices?.[0]?.message?.content) throw new Error('Groq API response invalid');
             emotions = groqRes.choices[0].message.content.split(' ');
         } else {
