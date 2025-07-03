@@ -1,3 +1,9 @@
+const express = require('express');
+const app = express();
+require('dotenv').config();
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const path = require('path');
+
 // --- /api/counter: 簡易計數器（記憶體版，重啟會歸零） ---
 let counter = 0;
 app.get('/api/counter', (req, res) => {
@@ -13,13 +19,6 @@ app.get('/api/counter', (req, res) => {
 app.get('/api/env', (req, res) => {
   res.json({ NODE_ENV: process.env.NODE_ENV || 'production' });
 });
-require('dotenv').config();
-const express = require('express');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const path = require('path');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 // 靜態檔案服務，支援 favicon.ico 及其他靜態資源
@@ -59,6 +58,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
