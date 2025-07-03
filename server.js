@@ -29,10 +29,10 @@ app.use(express.static(__dirname)); // 兼容 favicon.ico 在根目錄
 app.post('/api/prayer', async (req, res) => {
   const topic = req.body.topic || "感恩";
 
-  // 檢查金鑰是否存在
+  // 檢查金鑰是否存在，若未設置則回傳明確錯誤訊息
   if (!process.env.GROQ_API_KEY) {
     console.error('GROQ_API_KEY is missing!');
-    return res.status(500).json({ error: "API key not set" });
+    return res.status(500).json({ error: "API 金鑰未設置，無法獲取經文，請聯絡網站管理員。" });
   }
 
   try {
@@ -53,10 +53,21 @@ app.post('/api/prayer', async (req, res) => {
       })
     });
 
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Groq API error:', errText);
+      return res.status(500).json({ error: "Groq API 回應失敗", detail: errText });
+    }
+
     const data = await response.json();
+    if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+      console.error('Groq API response format error:', data);
+      return res.status(500).json({ error: "Groq API 回傳格式異常，無法取得經文。" });
+    }
     res.json({ result: data.choices[0].message.content });
   } catch (err) {
-    res.status(500).json({ error: "API call failed" });
+    console.error('API call failed:', err);
+    res.status(500).json({ error: "API call failed", detail: err.message });
   }
 });
 
