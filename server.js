@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 require('dotenv').config();
+console.log('GROQ_API_KEY:', process.env.GROQ_API_KEY); // 加這行測試
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const path = require('path');
 
@@ -27,6 +28,12 @@ app.use(express.static(__dirname)); // 兼容 favicon.ico 在根目錄
 
 app.post('/api/prayer', async (req, res) => {
   const topic = req.body.topic || "感恩";
+
+  // 檢查金鑰是否存在
+  if (!process.env.GROQ_API_KEY) {
+    console.error('GROQ_API_KEY is missing!');
+    return res.status(500).json({ error: "API key not set" });
+  }
 
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
