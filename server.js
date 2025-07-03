@@ -1,13 +1,16 @@
 // --- /api/counter: 簡易計數器（記憶體版，重啟會歸零） ---
 let counter = 0;
 app.get('/api/counter', (req, res) => {
-  counter++;
-  res.json({ count: counter });
+  if (req.method === 'POST') {
+    counter++;
+    res.json({ count: counter });
+  } else {
+    res.json({ count: counter });
+  }
 });
 
 // --- /api/env: 回傳環境變數（僅回傳安全資訊，勿回傳金鑰） ---
 app.get('/api/env', (req, res) => {
-  // 只回傳 NODE_ENV 供前端判斷環境
   res.json({ NODE_ENV: process.env.NODE_ENV || 'production' });
 });
 require('dotenv').config();
@@ -19,7 +22,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+// 靜態檔案服務，支援 favicon.ico 及其他靜態資源
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname)); // 兼容 favicon.ico 在根目錄
 
 app.post('/api/prayer', async (req, res) => {
   const topic = req.body.topic || "感恩";

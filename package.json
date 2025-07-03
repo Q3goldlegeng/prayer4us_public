@@ -2,12 +2,10 @@
   "name": "prayer-app",
   "version": "1.0.0",
   "description": "聖經經文情緒支持網站",
-  "main": "index.html",
+  "main": "server.js",
   "scripts": {
-    "start": "npx http-server",
-    "dev": "next dev",
-    "build": "next build",
-    "vercel-build": "echo 'No build step'"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "engines": {
     "node": ">=14.x"
