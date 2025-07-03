@@ -6,13 +6,16 @@ const path = require('path');
 
 // --- /api/counter: 簡易計數器（記憶體版，重啟會歸零） ---
 let counter = 0;
+
+// GET 訪問次數
 app.get('/api/counter', (req, res) => {
-  if (req.method === 'POST') {
-    counter++;
-    res.json({ count: counter });
-  } else {
-    res.json({ count: counter });
-  }
+  res.json({ count: counter });
+});
+
+// POST 增加次數
+app.post('/api/counter', (req, res) => {
+  counter++;
+  res.json({ count: counter });
 });
 
 // --- /api/env: 回傳環境變數（僅回傳安全資訊，勿回傳金鑰） ---

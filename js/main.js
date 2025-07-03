@@ -184,26 +184,9 @@ async function recordAudioGeneration(language) {
         }
     }
 }
-
-// 從環境變數中獲取API金鑰
+// 不再嘗試從前端取得 API 金鑰，所有金鑰僅由後端管理
 async function loadApiKey() {
-    try {
-        // 使用 env-config.js 中的 getApiKey 函數
-        apiKey = await window.getApiKey();
-        if (!apiKey) {
-            console.error('API金鑰未設置');
-            apiKey = ''; // 設置為空字符串，將使用備用情緒列表
-        }
-    } catch (error) {
-        console.error('無法載入環境變數:', error);
-        apiKey = ''; // 設置為空字符串，將使用備用情緒列表
-    }
-    
-    // 檢測並設置用戶語言
-    detectUserLanguage();
-    
-    // 獲取當前語言
-    currentLanguage = getCurrentLanguage();
+    apiKey = '';
 }
 
 let emotionHistory = []; // 用於記錄情緒列表歷史
