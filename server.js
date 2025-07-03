@@ -15,7 +15,7 @@ app.get('/api/env', (req, res) => {
 });
 require('dotenv').config();
 const express = require('express');
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const path = require('path');
 
 const app = express();
