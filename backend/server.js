@@ -20,8 +20,11 @@ app.get('/api/env', (req, res) => {
   res.json({ NODE_ENV: process.env.NODE_ENV || 'production' });
 });
 
+
 app.use(express.json());
-// 靜態檔案服務，支援 favicon.ico 及其他靜態資源
+// 靜態檔案服務，支援 js/css/public 路徑
+app.use('/js', express.static(path.join(__dirname, '..', 'js')));
+app.use('/css', express.static(path.join(__dirname, '..', 'css')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname)); // 兼容 favicon.ico 在根目錄
 
