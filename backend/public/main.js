@@ -1,3 +1,35 @@
+// 記錄訪問
+async function recordVisit(language) {
+    if (counterFunctionalityDisabled) {
+        console.log('計數器功能已被禁用，跳過訪問記錄');
+        return;
+    }
+    try {
+        const apiUrl = `${window.location.origin}${counterApiPath}`;
+        console.log('正在記錄訪問，API URL:', apiUrl);
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'visit', language })
+        });
+        if (!response.ok) {
+            console.warn(`無法記錄訪問，狀態碼: ${response.status}`);
+            try {
+                const errorData = await response.json();
+                console.warn('錯誤詳情:', errorData);
+            } catch (e) {
+                console.warn('無法解析錯誤回應');
+            }
+        } else {
+            console.log('成功記錄訪問');
+        }
+    } catch (error) {
+        console.warn('記錄訪問時出錯:', error);
+        if (error.message && error.message.includes('404')) {
+            console.info('提示: 在本地開發中，請確保 Next.js API 路由正確設置並運行。');
+        }
+    }
+}
 
 // 語系網址參數優先：如網址有 ?lang=zh-Hant 會直接切換語系，不再自動偵測
 function getLangFromUrl() {
