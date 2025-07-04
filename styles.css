@@ -93,7 +93,7 @@ button:active {
 }
 
 #verse::before {
-    content: """;
+    content: "“";
     position: absolute;
     top: -30px;
     left: 20px;
@@ -103,7 +103,7 @@ button:active {
 }
 
 #verse::after {
-    content: """;
+    content: "”";
     position: absolute;
     bottom: -80px;
     right: 20px;

@@ -20,9 +20,9 @@ export default async function handler(req, res) {
 
   try {
     // Get the API key from environment variables
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: 'API key not configured' });
+      return res.status(500).json({ error: 'GROQ API key not configured' });
     }
 
     // Get the request body
@@ -34,8 +34,8 @@ export default async function handler(req, res) {
 
     const selectedVoice = voice || 'alloy';
 
-    // Make the request to OpenAI API
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+    // Make the request to Groq API
+    const response = await fetch('https://api.groq.com/openai/v1/audio/speech', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,

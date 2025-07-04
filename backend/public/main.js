@@ -1,184 +1,86 @@
-7/**
- * 語系網址參數優先：如網址有 ?lang=zh-Hant 會直接切換語系，不再自動偵測
- * 用法：https://yourdomain.com/?lang=zh-Hant
- */
+
+// 語系網址參數優先：如網址有 ?lang=zh-Hant 會直接切換語系，不再自動偵測
 function getLangFromUrl() {
     const params = new URLSearchParams(window.location.search);
     return params.get('lang');
 }
+let apiKey = '';
+let currentLanguage = '';
+const counterApiPath = '/api/counter';
+let counterFunctionalityDisabled = false;
+
+function detectUserLanguage() {
+    // 只有當用戶還沒有設置語言偏好時才自動檢測
+    if (localStorage.getItem('preferredLanguage')) {
+        return;
+    }
+    const supportedLanguages = ['zh-Hant', 'zh-Hans', 'en', 'ja', 'ko', 'de', 'fr', 'it', 'nl', 'es'];
+    let browserLang = navigator.language || navigator.userLanguage || '';
+    browserLang = browserLang.toLowerCase();
+    if (supportedLanguages.includes(browserLang)) {
+        localStorage.setItem('preferredLanguage', browserLang);
+        return;
+    }
+    const langPrefix = browserLang.split('-')[0];
+    if (langPrefix === 'zh') {
+        if (browserLang.includes('cn') || browserLang.includes('sg')) {
+            localStorage.setItem('preferredLanguage', 'zh-Hans');
+        } else {
+            localStorage.setItem('preferredLanguage', 'zh-Hant');
+        }
+        return;
+    }
+    switch (langPrefix) {
+        case 'en': localStorage.setItem('preferredLanguage', 'en'); break;
+        case 'ja': localStorage.setItem('preferredLanguage', 'ja'); break;
+        case 'ko': localStorage.setItem('preferredLanguage', 'ko'); break;
+        case 'de': localStorage.setItem('preferredLanguage', 'de'); break;
+        case 'fr': localStorage.setItem('preferredLanguage', 'fr'); break;
+        case 'it': localStorage.setItem('preferredLanguage', 'it'); break;
+        case 'nl': localStorage.setItem('preferredLanguage', 'nl'); break;
+        case 'es': localStorage.setItem('preferredLanguage', 'es'); break;
+        default: localStorage.setItem('preferredLanguage', 'zh-Hant');
+    }
+}
+
+
+// 優先處理網址語系參數
 const urlLang = getLangFromUrl();
 if (urlLang && typeof setCurrentLanguage === 'function') {
     setCurrentLanguage(urlLang);
     localStorage.setItem('preferredLanguage', urlLang);
 }
 
- // 獲取API金鑰
-let apiKey = '';
-let currentLanguage = '';
-
-// Counter API path - adjusted for actual deployment structure
-const counterApiPath = '/api/counter';
-
-// Flag to disable counter functionality if the endpoint is not available
-let counterFunctionalityDisabled = false;
-
-// 檢測用戶瀏覽器語言並設置合適的語言
-function detectUserLanguage() {
-    // 只有當用戶還沒有設置語言偏好時才自動檢測
-    if (localStorage.getItem('preferredLanguage')) {
-        return;
-    }
-    
-    const supportedLanguages = ['zh-Hant', 'zh-Hans', 'en', 'ja', 'ko', 'de', 'fr', 'it', 'nl', 'es'];
-    let browserLang = navigator.language || navigator.userLanguage || '';
-    browserLang = browserLang.toLowerCase();
-    
-    // 首先檢查完全匹配
-    if (supportedLanguages.includes(browserLang)) {
-        localStorage.setItem('preferredLanguage', browserLang);
-        return;
-    }
-    
-    // 檢查語言代碼前綴匹配
-    const langPrefix = browserLang.split('-')[0];
-    
-    // 中文特殊處理：檢查是否為簡體中文區域
-    if (langPrefix === 'zh') {
-        // zh-CN, zh-SG 為簡體中文區域
-        if (browserLang.includes('cn') || browserLang.includes('sg')) {
-            localStorage.setItem('preferredLanguage', 'zh-Hans');
-        } else {
-            // zh-TW, zh-HK, zh-MO 等為繁體中文區域
-            localStorage.setItem('preferredLanguage', 'zh-Hant');
-        }
-        return;
-    }
-    
-    // 其他語言的前綴匹配
-    switch (langPrefix) {
-        case 'en':
-            localStorage.setItem('preferredLanguage', 'en');
-            break;
-        case 'ja':
-            localStorage.setItem('preferredLanguage', 'ja');
-            break;
-        case 'ko':
-            localStorage.setItem('preferredLanguage', 'ko');
-            break;
-        case 'de':
-            localStorage.setItem('preferredLanguage', 'de');
-            break;
-        case 'fr':
-            localStorage.setItem('preferredLanguage', 'fr');
-            break;
-        case 'it':
-            localStorage.setItem('preferredLanguage', 'it');
-            break;
-        case 'nl':
-            localStorage.setItem('preferredLanguage', 'nl');
-            break;
-        case 'es':
-            localStorage.setItem('preferredLanguage', 'es');
-            break;
-        default:
-            // 默認使用繁體中文
-            localStorage.setItem('preferredLanguage', 'zh-Hant');
-    }
-}
-
-// 記錄訪問
-async function recordVisit(language) {
-    // 如果功能已被禁用，則直接返回
-    if (counterFunctionalityDisabled) {
-        console.log('計數器功能已被禁用，跳過訪問記錄');
-        return;
-    }
-
-    try {
-        // 打印 API URL 以便調試
-        const apiUrl = `${window.location.origin}${counterApiPath}`; // Use counterApiPath directly
-        console.log('正在記錄訪問，API URL:', apiUrl);
-
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'visit',
-                language: language
-            })
-        });
-        
-        if (!response.ok) {
-            console.warn(`無法記錄訪問，狀態碼: ${response.status}`);
-            
-            // 嘗試讀取錯誤詳情
-            try {
-                const errorData = await response.json();
-                console.warn('錯誤詳情:', errorData);
-            } catch (e) {
-                // 可能無法解析為 JSON
-                console.warn('無法解析錯誤回應');
-            }
-        } else {
-            console.log('成功記錄訪問');
-        }
-    } catch (error) {
-        console.warn('記錄訪問時出錯:', error);
-        
-        // 如果在本地開發中遇到 404 錯誤，可能是 API 尚未準備好
-        if (error.message && error.message.includes('404')) {
-            console.info('提示: 在本地開發中，請確保 Next.js API 路由正確設置並運行。');
-        }
-    }
-}
-
 // 記錄音頻生成
 async function recordAudioGeneration(language) {
-    // 如果功能已被禁用，則直接返回
     if (counterFunctionalityDisabled) {
         console.log('計數器功能已被禁用，跳過音頻生成記錄');
         return;
     }
-
-    console.log(`[recordAudioGeneration] Attempting to record audio generation for language: ${language}`); // Added log
+    console.log(`[recordAudioGeneration] Attempting to record audio generation for language: ${language}`);
     try {
-        // 打印 API URL 以便調試
-        const apiUrl = `${window.location.origin}${counterApiPath}`; // Use counterApiPath directly
-        console.log('[recordAudioGeneration] Sending POST request to:', apiUrl); // Added log
-
+        const apiUrl = `${window.location.origin}${counterApiPath}`;
+        console.log('[recordAudioGeneration] Sending POST request to:', apiUrl);
         const response = await fetch(apiUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'audio',
-                language: language
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'audio', language })
         });
-        
-        console.log(`[recordAudioGeneration] Received response status: ${response.status}`); // Added log
+        console.log(`[recordAudioGeneration] Received response status: ${response.status}`);
         if (!response.ok) {
-            console.warn(`[recordAudioGeneration] Failed to record audio generation. Status: ${response.status}`); // Modified log
-            
-            // 嘗試讀取錯誤詳情
+            console.warn(`[recordAudioGeneration] Failed to record audio generation. Status: ${response.status}`);
             try {
                 const errorData = await response.json();
-                console.warn('[recordAudioGeneration] Error details:', errorData); // Modified log
+                console.warn('[recordAudioGeneration] Error details:', errorData);
             } catch (e) {
-                // 可能無法解析為 JSON
-                console.warn('[recordAudioGeneration] Could not parse error response.'); // Modified log
+                console.warn('[recordAudioGeneration] Could not parse error response.');
             }
         } else {
-            const responseData = await response.json(); // Added log
-            console.log('[recordAudioGeneration] Successfully recorded audio generation. Response data:', responseData); // Modified log
+            const responseData = await response.json();
+            console.log('[recordAudioGeneration] Successfully recorded audio generation. Response data:', responseData);
         }
     } catch (error) {
-        console.error('[recordAudioGeneration] Error during fetch:', error); // Modified log
-        
-        // 檢查是否為404錯誤，在本地開發中提供更有用的訊息
+        console.error('[recordAudioGeneration] Error during fetch:', error);
         if (error.message && error.message.includes('404')) {
             console.info('提示: 在本地開發中，請確保 Next.js API 路由正確設置並運行，或已部署到 Vercel 。');
         }
@@ -186,12 +88,9 @@ async function recordAudioGeneration(language) {
 }
 // 不再嘗試從前端取得 API 金鑰，所有金鑰僅由後端管理
 async function loadApiKey() {
-    apiKey = '';
-}
-    
+    // 移除 apiKey 相關邏輯，僅初始化語言
     // 檢測並設置用戶語言
     detectUserLanguage();
-    
     // 獲取當前語言
     currentLanguage = getCurrentLanguage();
 }
@@ -373,222 +272,23 @@ async function generateEmotions(context, isFirst = false) {
         });
         if (response.ok) {
             const data = await response.json();
-            // 假設後端回傳格式為 { result: '...' }
-            // 你可以根據實際格式調整
-            return data.result;
+            // 假設後端回傳格式為 { result: [ ... ] }
+            if (Array.isArray(data.result)) {
+                return data.result;
+            } else if (typeof data.result === 'string') {
+                // 若後端回傳字串，嘗試以空格分割
+                return data.result.split(' ');
+            } else {
+                return fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
+            }
         } else {
             return fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
         }
     } catch (e) {
         return fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
     }
-                : currentLanguage === 'ja'
-                    ? '小グループ交わりの祈り'
-                    : currentLanguage === 'ko'
-                        ? '소그룹 모임을 위한 기도'
-                        : currentLanguage === 'de'
-                            ? 'Gebet für Kleingruppentreffen'
-                            : currentLanguage === 'fr'
-                                ? 'Prière pour la communion en petit groupe'
-                                : currentLanguage === 'it'
-                                    ? 'Preghiera per la comunione in piccolo gruppo'
-                                    : currentLanguage === 'nl'
-                                        ? 'Gebed voor kleine groepsbijeenkomst'
-                                        : currentLanguage === 'es'
-                                            ? 'Oración para reunión de grupo pequeño'
-                                            : '與人小組聚會的禱告';
-            if (mealPrayer && !result.includes(mealPrayer)) result.push(mealPrayer);
-            if (!result.includes(groupPrayer)) result.push(groupPrayer);
-        }
-        return result;
-    }
-
-    try {
-        let emotions = [];
-        if (useGroq) {
-            // 使用 Groq API
-            const groqPrompt =
-                '參考以下情境提供5個' +
-                (currentLanguage === 'en' ? '英文' :
-                currentLanguage === 'ja' ? '日文' :
-                currentLanguage === 'ko' ? '韓文' :
-                currentLanguage === 'de' ? '德文' :
-                currentLanguage === 'fr' ? '法文' :
-                currentLanguage === 'it' ? '義大利文' :
-                currentLanguage === 'nl' ? '荷蘭文' :
-                currentLanguage === 'es' ? '西班牙文' : '中文') +
-                '最近一般人常會有的情緒狀態(不要編號)，最後加「' + t('otherSituation') + '」，用空格分隔：\n' +
-                '情境：' + context + '\n' +
-                '範例輸出：' +
-                (currentLanguage === 'en' ? 'Anxiety Sadness Loneliness Stress Joy ' + t('otherSituation') :
-                currentLanguage === 'ja' ? '不安 悲しみ 孤独 ストレス 喜び ' + t('otherSituation') :
-                currentLanguage === 'ko' ? '불안 슬픔 외로움 스트레스 기쁨 ' + t('otherSituation') :
-                currentLanguage === 'de' ? 'Angst Traurigkeit Einsamkeit Stress Freude ' + t('otherSituation') :
-                currentLanguage === 'fr' ? 'Anxiété Tristesse Solitude Stress Joie ' + t('otherSituation') :
-                currentLanguage === 'it' ? 'Ansia Tristezza Solitudine Stress Gioia ' + t('otherSituation') :
-                currentLanguage === 'nl' ? 'Angst Verdriet Eenzaamheid Stress Vreugde ' + t('otherSituation') :
-                '焦慮 悲傷 孤獨 壓力 喜樂 ' + t('otherSituation'));
-            // 直接呼叫後端 API 產生情緒，不再由前端呼叫 Groq API
-            const response = await fetch('/api/prayer', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic: context })
-            });
-            if (response.ok) {
-                const data = await response.json();
-                // 假設後端回傳格式為 { result: '...' }
-                // 你可以根據實際格式調整
-                return data.result;
-            } else {
-                // fallback
-                return fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
-            }
-            if (!groqRes?.choices?.[0]?.message?.content) throw new Error('Groq API response invalid');
-            emotions = groqRes.choices[0].message.content.split(' ');
-        } else {
-            // 使用 OpenAI API
-            const openaiPrompt =
-                '參考以下情境提供5個' +
-                (currentLanguage === 'en' ? '英文' :
-                currentLanguage === 'ja' ? '日文' :
-                currentLanguage === 'ko' ? '韓文' :
-                currentLanguage === 'de' ? '德文' :
-                currentLanguage === 'fr' ? '法文' :
-                currentLanguage === 'it' ? '義大利文' :
-                currentLanguage === 'nl' ? '荷蘭文' :
-                currentLanguage === 'es' ? '西班牙文' : '中文') +
-                '最近一般人常會有的情緒狀態(不要編號)，最後加「' + t('otherSituation') + '」，用空格分隔：\n' +
-                '情境：' + context + '\n' +
-                '範例輸出：' +
-                (currentLanguage === 'en' ? 'Anxiety Sadness Loneliness Stress Joy ' + t('otherSituation') :
-                currentLanguage === 'ja' ? '不安 悲しみ 孤独 ストレス 喜び ' + t('otherSituation') :
-                currentLanguage === 'ko' ? '불안 슬픔 외로움 스트레스 기쁨 ' + t('otherSituation') :
-                currentLanguage === 'de' ? 'Angst Traurigkeit Einsamkeit Stress Freude ' + t('otherSituation') :
-                currentLanguage === 'fr' ? 'Anxiété Tristesse Solitude Stress Joie ' + t('otherSituation') :
-                currentLanguage === 'it' ? 'Ansia Tristezza Solitudine Stress Gioia ' + t('otherSituation') :
-                currentLanguage === 'nl' ? 'Angst Verdriet Eenzaamheid Stress Vreugde ' + t('otherSituation') :
-                '焦慮 悲傷 孤獨 壓力 喜樂 ' + t('otherSituation'));
-            const response = await fetch('/api/prayer', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    topic: openaiPrompt // 或根據你的後端 API 設計傳遞必要參數
-                })
-            });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-            if (!data?.choices?.[0]?.message?.content) throw new Error('Invalid API response structure');
-            emotions = data.choices[0].message.content.split(' ');
-        }
-        // 過濾已使用過的情緒
-        const newEmotions = emotions.filter(e => !usedEmotions.has(e));
-        newEmotions.forEach(e => usedEmotions.add(e));
-        let result = newEmotions.slice(0, 5).concat(t('otherSituation'));
-        // 新增功能：用餐前的禱告、與人小組聚會的禱告
-        if (isFirst) {
-            const now = new Date();
-            const hour = now.getHours();
-            let mealPrayer = null;
-            if ((hour >= 5 && hour < 9) || (hour >= 11 && hour < 14) || (hour >= 17 && hour < 20)) {
-                mealPrayer = currentLanguage === 'en'
-                    ? 'Prayer before meal'
-                    : currentLanguage === 'ja'
-                        ? '食事前の祈り'
-                        : currentLanguage === 'ko'
-                            ? '식사 전 기도'
-                            : currentLanguage === 'de'
-                                ? 'Gebet vor dem Essen'
-                                : currentLanguage === 'fr'
-                                    ? 'Prière avant le repas'
-                                    : currentLanguage === 'it'
-                                        ? 'Preghiera prima del pasto'
-                                        : currentLanguage === 'nl'
-                                            ? 'Gebed voor de maaltijd'
-                                            : currentLanguage === 'es'
-                                                ? 'Oración antes de comer'
-                                                : '用餐前的禱告';
-            }
-            const groupPrayer = currentLanguage === 'en'
-                ? 'Prayer for small group fellowship'
-                : currentLanguage === 'ja'
-                    ? '小グループ交わりの祈り'
-                    : currentLanguage === 'ko'
-                        ? '소그룹 모임을 위한 기도'
-                        : currentLanguage === 'de'
-                            ? 'Gebet für Kleingruppentreffen'
-                            : currentLanguage === 'fr'
-                                ? 'Prière pour la communion en petit groupe'
-                                : currentLanguage === 'it'
-                                    ? 'Preghiera per la comunione in piccolo gruppo'
-                                    : currentLanguage === 'nl'
-                                        ? 'Gebed voor kleine groepsbijeenkomst'
-                                        : currentLanguage === 'es'
-                                            ? 'Oración para reunión de grupo pequeño'
-                                            : '與人小組聚會的禱告';
-            if (mealPrayer && !result.includes(mealPrayer)) result.push(mealPrayer);
-            if (!result.includes(groupPrayer)) result.push(groupPrayer);
-        }
-        return result;
-    } catch (error) {
-        console.error('獲取情緒列表失敗:', error);
-        // ...existing code...
-        const fallbackEmotions = {
-            'zh-Hant': ['焦慮', '悲傷', '孤獨', '壓力', '喜樂', t('otherSituation')],
-            'zh-Hans': ['焦虑', '悲伤', '孤独', '压力', '喜乐', t('otherSituation')],
-            'en': ['Anxiety', 'Sadness', 'Loneliness', 'Stress', 'Joy', t('otherSituation')],
-            'ja': ['不安', '悲しみ', '孤独', 'ストレス', '喜び', t('otherSituation')],
-            'ko': ['불안', '슬픔', '외로움', '스트레스', '기쁨', t('otherSituation')],
-            'de': ['Angst', 'Traurigkeit', 'Einsamkeit', 'Stress', 'Freude', t('otherSituation')],
-            'fr': ['Anxiété', 'Tristesse', 'Solitude', 'Stress', 'Joie', t('otherSituation')],
-            'it': ['Ansia', 'Tristezza', 'Solitudine', 'Stress', 'Gioia', t('otherSituation')],
-            'nl': ['Angst', 'Verdriet', 'Eenzaamheid', 'Stress', 'Vreugde', t('otherSituation')],
-            'es': ['Ansiedad', 'Tristeza', 'Soledad', 'Estrés', 'Alegría', t('otherSituation')]
-        };
-        let result = fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
-        // ...existing code...
-        if (isFirst) {
-            // ...existing code...
-            const now = new Date();
-            const hour = now.getHours();
-            let mealPrayer = null;
-            if ((hour >= 5 && hour < 9) || (hour >= 11 && hour < 14) || (hour >= 17 && hour < 20)) {
-                mealPrayer = currentLanguage === 'en'
-                    ? 'Prayer before meal'
-                    : currentLanguage === 'ja'
-                        ? '食事前の祈り'
-                        : currentLanguage === 'ko'
-                            ? '식사 전 기도'
-                            : currentLanguage === 'de'
-                                ? 'Gebet vor dem Essen'
-                                : currentLanguage === 'fr'
-                                    ? 'Prière avant le repas'
-                                    : currentLanguage === 'it'
-                                        ? 'Preghiera prima del pasto'
-                                        : currentLanguage === 'nl'
-                                            ? 'Gebed voor de maaltijd'
-                                            : '用餐前的禱告';
-            }
-            const groupPrayer = currentLanguage === 'en'
-                ? 'Prayer for small group fellowship'
-                : currentLanguage === 'ja'
-                    ? '小グループ交わりの祈り'
-                    : currentLanguage === 'ko'
-                        ? '소그룹 모임을 위한 기도'
-                        : currentLanguage === 'de'
-                            ? 'Gebet für Kleingruppentreffen'
-                            : currentLanguage === 'fr'
-                                ? 'Prière pour la communion en petit groupe'
-                                : currentLanguage === 'it'
-                                    ? 'Preghiera per la comunione in piccolo gruppo'
-                                    : currentLanguage === 'nl'
-                                        ? 'Gebed voor kleine groepsbijeenkomst'
-                                        : '與人小組聚會的禱告';
-            if (mealPrayer && !result.includes(mealPrayer)) result.push(mealPrayer);
-            if (!result.includes(groupPrayer)) result.push(groupPrayer);
-        }
-        return result;
-    }
 }
+
 
 // 創建動態按鈕
 function createEmotionButtons(emotions) {
@@ -787,30 +487,24 @@ Shimmer: 柔和且舒緩的聲音，適合平靜的環境
 VOICE: [選擇的語音名稱，小寫]`;
         }
         
-        const response = await fetch('/api/prayer', {
+        // 改為呼叫 Groq API 代理端點
+        const response = await fetch('/api/groq', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 content,       // 你要傳給後端的內容
                 prayerText     // 其他必要參數
             })
-            });
-            const data = await response.json();
-            // data.result 是後端回傳的禱告文
-
-
+        });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        const data = await response.json();
-        
-        if (!data?.choices?.[0]?.message?.content) {
+        const groqData = await response.json();
+        if (!groqData?.choices?.[0]?.message?.content) {
             throw new Error('Invalid API response structure');
         }
-
         // 解析回應
-        const responseText = data.choices[0].message.content.trim();
+        const responseText = groqData.choices[0].message.content.trim();
         
         // 提取語音名稱
         const voiceMatch = responseText.match(/VOICE:\s*(\w+)/i);
@@ -860,10 +554,7 @@ let countdownSeconds = 0;
  * @param {boolean} isFirst - 是否為第一段
  */
 async function getEmotionalVerse(emotion, isFirst = false) {
-    if (!apiKey) {
-        document.getElementById('verse').innerHTML = t('apiKeyNotSet');
-        return;
-    }
+    // 前端不再檢查 apiKey
     if (isFirst) {
         prayerSegments = [];
         prayerEmotion = emotion;
@@ -896,18 +587,18 @@ async function getEmotionalVerse(emotion, isFirst = false) {
         }, 1000);
 
         // 產生禱告詞
-        const response = await fetch('/api/prayer', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        emotion,
-        currentLanguage,
-        prayerLength,
-        // 你要的其他參數
-    })
-});
-const data = await response.json();
-// data.result 就是後端回傳的禱告文與經文
+        // 改為呼叫 Groq API 代理端點
+        const response = await fetch('/api/groq', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                emotion,
+                currentLanguage,
+                prayerLength
+            })
+        });
+        const groqData = await response.json();
+        // data.result 就是後端回傳的禱告文與經文
 
 
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -1066,10 +757,7 @@ function renderPrayerLoading() {
  * 播放指定段落的禱告詞
  */
 async function playPrayerSegment(idx) {
-    if (!apiKey) {
-        alert(t('apiKeyNotSetAudio'));
-        return;
-    }
+    // 前端不再檢查 apiKey
     const seg = prayerSegments[idx];
     const button = document.getElementById(`play-button-${idx}`);
     const spinner = document.getElementById(`loading-spinner-${idx}`);
@@ -1121,10 +809,7 @@ async function playPrayerSegment(idx) {
 
 // 修改playPrayer函數
 async function playPrayer(encodedText, encodedInstructions = '') {
-    if (!apiKey) {
-        alert(t('apiKeyNotSetAudio'));
-        return;
-    }
+    // 前端不再檢查 apiKey
     
     const button = document.getElementById('play-button');
     const spinner = document.getElementById('loading-spinner');
@@ -1205,10 +890,22 @@ async function checkCounterEndpoint() {
     }
 }
 
+// 全域錯誤監聽，方便除錯
+window.onerror = function(message, source, lineno, colno, error) {
+    console.error('全域錯誤:', message, source, lineno, colno, error);
+};
+window.onunhandledrejection = function(event) {
+    console.error('未捕捉的 Promise 拋出:', event.reason);
+};
+
 // 初始化
 window.onload = async function() {
-    // 先檢查計數器API是否可用
-    await checkCounterEndpoint();
-    // 初始化情緒按鈕
-    await initEmotions();
+    try {
+        // 先檢查計數器API是否可用
+        await checkCounterEndpoint();
+        // 初始化情緒按鈕
+        await initEmotions();
+    } catch (e) {
+        console.error('初始化失敗:', e);
+    }
 };

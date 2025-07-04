@@ -19,10 +19,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get the API key from environment variables
-    const apiKey = process.env.OPENAI_API_KEY;
+    // Get the Groq API key from environment variables
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: 'API key not configured' });
+      return res.status(500).json({ error: 'GROQ API key not configured' });
     }
 
     // Get the request body
@@ -42,15 +42,15 @@ export default async function handler(req, res) {
     【${explanationKey}】{解說}
     【${prayerKey}】{禱告詞}`;
 
-    // Make the request to OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Make the request to Groq API
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'llama3-70b-8192',
         messages: [{
           role: 'user',
           content: promptContent
@@ -62,9 +62,9 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('OpenAI API error:', response.status, errorData);
+      console.error('Groq API error:', response.status, errorData);
       return res.status(response.status).json({ 
-        error: 'Error from OpenAI API', 
+        error: 'Error from Groq API', 
         details: errorData
       });
     }
