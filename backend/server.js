@@ -1,5 +1,5 @@
 require('dotenv').config();
-console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY);
+console.log('GROQ_API_KEY:', process.env.GROQ_API_KEY);
 
 const express = require('express');
 const app = express();
@@ -9,12 +9,76 @@ const path = require('path');
 
 app.use(express.json());
 
-// --- /api/prayer: 代理 OpenAI chat/completions ---
+// --- /api/prayer: Generate prayer or scripture text using Groq or OpenAI ---
 app.post('/api/prayer', async (req, res) => {
   const { content, emotion, currentLanguage, prayerLength, topic } = req.body;
-  const apiKey = process.env.OPENAI_API_KEY;
+  // Prefer Groq, fallback to OpenAI if not set
+  const groqKey = process.env.GROQ_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+  let apiKey, apiUrl, model, systemPrompt;
+
+  if (groqKey) {
+    apiKey = groqKey;
+    apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+    model = 'llama3-70b-8192';
+    systemPrompt = '你是一位溫柔誠懇的基督徒禱告助手。';
+  } else if (openaiKey) {
+    apiKey = openaiKey;
+    apiUrl = 'https://api.openai.com/v1/chat/completions';
+    model = 'gpt-3.5-turbo';
+    systemPrompt = 'You are a gentle and sincere Christian prayer assistant.';
+  } else {
+    return res.status(500).json({ error: 'No API key set in environment.' });
+  }
+
+  // Compose prompt
+  let userPrompt = '';
+  if (content) {
+    userPrompt = content;
+  } else if (emotion) {
+    userPrompt = `請針對「${emotion}」情緒，寫一段禱告文，長度約${prayerLength || 100}字，並附上合適的聖經經文與簡短解說。語言：${currentLanguage || 'zh-Hant'}`;
+  } else if (topic) {
+    userPrompt = `請用繁體中文寫一段 100 字內的禱告文，主題是：「${topic}」。最後請加上一句對應的聖經經文出處。`;
+  } else {
+    return res.status(400).json({ error: 'Missing content, emotion, or topic.' });
+  }
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 1200
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(500).json({ error: 'API error', detail: errText });
+    }
+    const data = await response.json();
+    const result = data.choices?.[0]?.message?.content || '';
+    res.json({ result });
+  } catch (err) {
+    res.status(500).json({ error: 'API call failed', detail: err.message });
+  }
+});
+
+// --- /api/groq: 代理 Groq chat/completions ---
+app.post('/api/groq', async (req, res) => {
+  const { content, emotion, currentLanguage, prayerLength, topic } = req.body;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'OpenAI API key not set in environment.' });
+    return res.status(500).json({ error: 'Groq API key not set in environment.' });
   }
 
   // 組合 prompt
@@ -30,14 +94,14 @@ app.post('/api/prayer', async (req, res) => {
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'llama3-70b-8192',
         messages: [
           { role: 'system', content: '你是一位溫柔誠懇的基督徒禱告助手。' },
           { role: 'user', content: userPrompt }
@@ -49,7 +113,7 @@ app.post('/api/prayer', async (req, res) => {
 
     if (!response.ok) {
       const errText = await response.text();
-      return res.status(500).json({ error: 'OpenAI API error', detail: errText });
+      return res.status(500).json({ error: 'Groq API error', detail: errText });
     }
     const data = await response.json();
     const result = data.choices?.[0]?.message?.content || '';
@@ -59,11 +123,11 @@ app.post('/api/prayer', async (req, res) => {
   }
 });
 
-// --- /api/audio: 代理 OpenAI audio/speech ---
+// --- /api/audio: 代理 Groq audio/speech ---
 app.post('/api/audio', async (req, res) => {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'OpenAI API key not set in environment.' });
+    return res.status(500).json({ error: 'Groq API key not set in environment.' });
   }
   const { model, voice, input, response_format, instructions } = req.body;
   if (!model || !voice || !input || !response_format) {
@@ -71,7 +135,7 @@ app.post('/api/audio', async (req, res) => {
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+    const response = await fetch('https://api.groq.com/openai/v1/audio/speech', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -89,7 +153,7 @@ app.post('/api/audio', async (req, res) => {
 
     if (!response.ok) {
       const errText = await response.text();
-      return res.status(500).json({ error: 'OpenAI Audio API error', detail: errText });
+      return res.status(500).json({ error: 'Groq Audio API error', detail: errText });
     }
 
     // Stream audio to frontend
@@ -100,15 +164,15 @@ app.post('/api/audio', async (req, res) => {
   }
 });
 
-// --- /api/counter: 簡易計數器（記憶體版，重啟會歸零） ---
+
+// --- /api/counter: 最簡單的記憶體計數器 ---
 let counter = 0;
 app.get('/api/counter', (req, res) => {
-  if (req.method === 'POST') {
-    counter++;
-    res.json({ count: counter });
-  } else {
-    res.json({ count: counter });
-  }
+  res.json({ count: counter });
+});
+app.post('/api/counter', (req, res) => {
+  counter++;
+  res.json({ count: counter });
 });
 
 // --- /api/env: 回傳環境變數（僅回傳安全資訊，勿回傳金鑰） ---
