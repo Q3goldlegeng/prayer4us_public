@@ -468,20 +468,11 @@ async function generateEmotions(context, isFirst = false) {
                 currentLanguage === 'it' ? 'Ansia Tristezza Solitudine Stress Gioia ' + t('otherSituation') :
                 currentLanguage === 'nl' ? 'Angst Verdriet Eenzaamheid Stress Vreugde ' + t('otherSituation') :
                 '焦慮 悲傷 孤獨 壓力 喜樂 ' + t('otherSituation'));
-            const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
+            const response = await fetch('/api/prayer', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model: 'gpt-4.1-nano',
-                    messages: [{
-                        role: 'user',
-                        content: openaiPrompt
-                    }],
-                    max_tokens: 100,
-                    temperature: 0.7
+                    topic: openaiPrompt // 或根據你的後端 API 設計傳遞必要參數
                 })
             });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -796,22 +787,17 @@ Shimmer: 柔和且舒緩的聲音，適合平靜的環境
 VOICE: [選擇的語音名稱，小寫]`;
         }
         
-        const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
+        const response = await fetch('/api/prayer', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'gpt-4.1-nano',
-                messages: [{
-                    role: 'user',
-                    content: content
-                }],
-                max_tokens: prayerText ? 350 : 20,
-                temperature: 0.5
+                content,       // 你要傳給後端的內容
+                prayerText     // 其他必要參數
             })
-        });
+            });
+            const data = await response.json();
+            // data.result 是後端回傳的禱告文
+
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -910,29 +896,19 @@ async function getEmotionalVerse(emotion, isFirst = false) {
         }, 1000);
 
         // 產生禱告詞
-        const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: 'gpt-4o-mini',
-                messages: [{
-                    role: 'user',
-                    content: `請針對「${emotion}」情緒：
-1. 提供合適聖經經文(格式：『經文』書名 章:節)${currentLanguage === 'en' || currentLanguage === 'ja' || currentLanguage === 'ko' || currentLanguage === 'de' || currentLanguage === 'fr' || currentLanguage === 'it' || currentLanguage === 'nl' || currentLanguage === 'es' ? '只需' + (currentLanguage === 'en' ? '英文' : currentLanguage === 'ja' ? '日文' : currentLanguage === 'ko' ? '韓文' : currentLanguage === 'de' ? '德文' : currentLanguage === 'fr' ? '法文' : currentLanguage === 'it' ? '義大利文' : currentLanguage === 'nl' ? '荷蘭文' : currentLanguage === 'es' ? '西班牙文' : '') : '同時提出中英文'}
-2. 簡明的解說，50字內，${currentLanguage === 'en' ? '用英文' : currentLanguage === 'zh-Hans' ? '用简体中文' : currentLanguage === 'ja' ? '用日文' : currentLanguage === 'ko' ? '用韓文' : currentLanguage === 'de' ? '用德文' : currentLanguage === 'fr' ? '用法文' : currentLanguage === 'it' ? '用義大利文' : currentLanguage === 'nl' ? '用荷蘭文' : currentLanguage === 'es' ? '用西班牙文' : '用繁體中文'}
-3. 禱告詞，${prayerLength}字以上，你是一個資深慈愛的牧師，同情用戶的狀態，深情地為用戶禱告，為用戶設身處地思考，祈求上帝給用戶安慰和力量，用華麗的辭藻，用詩歌般的語言，用最真摯的情感，寫出最感人的禱告詞，激發用戶的感受，讓靈性灌注與降臨，${currentLanguage === 'en' ? '用英文' : currentLanguage === 'zh-Hans' ? '用简体中文' : currentLanguage === 'ja' ? '用日文' : currentLanguage === 'ko' ? '用韓文' : currentLanguage === 'de' ? '用德文' : currentLanguage === 'fr' ? '用法文' : currentLanguage === 'it' ? '用義大利文' : currentLanguage === 'nl' ? '用荷蘭文' : currentLanguage === 'es' ? '用西班牙文' : '用繁體中文'}
-請用以下格式回應：
-【${t('scripture').replace('：', '')}】{內容}
-【${t('explanation').replace('：', '')}】{解說}
-【${t('prayer').replace('：', '')}】{禱告詞}`
-                }],
-                max_tokens: 1200,
-                temperature: 0.8
-            })
-        });
+        const response = await fetch('/api/prayer', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        emotion,
+        currentLanguage,
+        prayerLength,
+        // 你要的其他參數
+    })
+});
+const data = await response.json();
+// data.result 就是後端回傳的禱告文與經文
+
 
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
@@ -1119,15 +1095,13 @@ async function playPrayerSegment(idx) {
         if (seg.instructions) {
             requestBody.instructions = seg.instructions;
         }
-        const response = await fetch('https://api.openai.com/v1/audio/speech', {
+        const response = await fetch('/api/audio', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-                'Accept': 'audio/mpeg'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
         });
+// 處理回傳的音訊資料
+
 
         const audioBlob = await response.blob();
         const audioUrl = URL.createObjectURL(new Blob([audioBlob], { type: 'audio/mpeg' }));
@@ -1182,15 +1156,13 @@ async function playPrayer(encodedText, encodedInstructions = '') {
             requestBody.instructions = instructions;
         }
         
-        const response = await fetch('https://api.openai.com/v1/audio/speech', {
+        const response = await fetch('/api/audio', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-                'Accept': 'audio/mpeg'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
         });
+// 處理回傳的音訊資料
+
 
         const audioBlob = await response.blob();
         const audioUrl = URL.createObjectURL(new Blob([audioBlob], { type: 'audio/mpeg' }));
