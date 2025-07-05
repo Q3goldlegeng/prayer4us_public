@@ -12,6 +12,37 @@ app.use(express.json());
 // --- /api/prayer: Generate prayer or scripture text using Groq or OpenAI ---
 app.post('/api/prayer', async (req, res) => {
   const { content, emotion, currentLanguage, prayerLength, topic } = req.body;
+  // 首頁情緒 prompt 直接回傳預設陣列
+  const emotionPrompts = [
+    '首次訪問，請推薦5個常見的情緒狀態',
+    '首次访问，请推荐5个常见的情绪状态',
+    'First visit, please recommend 5 common emotional states',
+    '初回訪問、一般的な感情状態を5つ推薦してください',
+    '첫 방문, 일반적인 감정 상태 5가지를 추천해 주세요',
+    'Erster Besuch, bitte empfehlen Sie 5 häufige emotionale Zustände',
+    'Première visite, veuillez recommander 5 états émotionnels courants',
+    'Prima visita, si prega di consigliare 5 stati emotivi comuni',
+    'Eerste bezoek, adviseer alstublieft 5 veelvoorkomende emotionele toestanden',
+    'Primera visita, por favor recomiende 5 estados emocionales comunes'
+  ];
+  if (topic && emotionPrompts.includes(topic)) {
+    // 根據語言回傳對應情緒
+    const emotionsByLang = {
+      'zh-Hant': ['焦慮', '悲傷', '孤獨', '壓力', '喜樂', '我有其他狀況'],
+      'zh-Hans': ['焦虑', '悲伤', '孤独', '压力', '喜乐', '我有其他状况'],
+      'en': ['Anxiety', 'Sadness', 'Loneliness', 'Stress', 'Joy', 'I have another situation'],
+      'ja': ['不安', '悲しみ', '孤独', 'ストレス', '喜び', '他の状況があります'],
+      'ko': ['불안', '슬픔', '외로움', '스트레스', '기쁨', '다른 상황이 있어요'],
+      'de': ['Angst', 'Traurigkeit', 'Einsamkeit', 'Stress', 'Freude', 'Ich habe eine andere Situation'],
+      'fr': ['Anxiété', 'Tristesse', 'Solitude', 'Stress', 'Joie', "J'ai une autre situation"],
+      'it': ['Ansia', 'Tristezza', 'Solitudine', 'Stress', 'Gioia', "Ho un'altra situazione"],
+      'nl': ['Angst', 'Verdriet', 'Eenzaamheid', 'Stress', 'Vreugde', 'Ik heb een andere situatie'],
+      'es': ['Ansiedad', 'Tristeza', 'Soledad', 'Estrés', 'Alegría', 'Tengo otra situación']
+    };
+    const lang = currentLanguage || 'zh-Hant';
+    return res.json({ result: emotionsByLang[lang] || emotionsByLang['zh-Hant'] });
+  }
+
   // Prefer Groq, fallback to OpenAI if not set
   const groqKey = process.env.GROQ_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
@@ -66,8 +97,7 @@ app.post('/api/prayer', async (req, res) => {
       return res.status(500).json({ error: 'API error', detail: errText });
     }
     const data = await response.json();
-    const result = data.choices?.[0]?.message?.content || '';
-    res.json({ result });
+    res.json(data); // 回傳完整 Groq/OpenAI API 格式，前端可正確解析 choices[0].message.content
   } catch (err) {
     res.status(500).json({ error: 'API call failed', detail: err.message });
   }
@@ -116,8 +146,8 @@ app.post('/api/groq', async (req, res) => {
       return res.status(500).json({ error: 'Groq API error', detail: errText });
     }
     const data = await response.json();
-    const result = data.choices?.[0]?.message?.content || '';
-    res.json({ result });
+    // 回傳完整 Groq/OpenAI API 格式，前端可正確解析
+    res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'API call failed', detail: err.message });
   }
