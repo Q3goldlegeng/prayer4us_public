@@ -1,3 +1,317 @@
+// 讓主要互動函數可被全域呼叫（for inline onclick）
+// 先宣告 function，最後再掛到 window，避免 ReferenceError
+
+// 背景音樂相關變數
+let backgroundMusic = null;
+let isMusicPlaying = false;
+let musicVolume = 0.3; // 預設音量 30%
+let currentMusicType = 'piano'; // 預設音樂類型
+
+// 音樂檔案列表
+const musicFiles = {
+    piano: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+    water: 'https://www.soundjay.com/misc/sounds/water-flowing-1.wav',
+    forest: 'https://www.soundjay.com/misc/sounds/meditation-bell-1.wav'
+};
+
+// 音樂類型顯示名稱
+const musicTypeNames = {
+    piano: '🎹 鋼琴音樂',
+    water: '💧 水聲',
+    forest: '🌲 森林'
+};
+
+// 背景音樂控制函數
+function initBackgroundMusic() {
+    // 創建音頻元素
+    backgroundMusic = new Audio();
+    backgroundMusic.loop = true;
+    backgroundMusic.volume = musicVolume;
+    
+    // 設定預設背景音樂
+    backgroundMusic.src = musicFiles[currentMusicType];
+    
+    // 載入音樂並處理錯誤
+    backgroundMusic.load();
+    backgroundMusic.onerror = function() {
+        console.warn('背景音樂載入失敗，使用備用音樂');
+        backgroundMusic.src = 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav';
+    };
+    
+    // 自動播放音樂
+    setTimeout(() => {
+        autoPlayMusic();
+    }, 1000);
+}
+
+function autoPlayMusic() {
+    if (backgroundMusic && !isMusicPlaying) {
+        backgroundMusic.play().then(() => {
+            isMusicPlaying = true;
+            updateMusicButton();
+        }).catch(error => {
+            console.warn('自動播放失敗，需要用戶互動:', error);
+            // 如果自動播放失敗，顯示提示
+            showMusicPlayHint();
+        });
+    }
+}
+
+function showMusicPlayHint() {
+    // 創建提示訊息
+    const hint = document.createElement('div');
+    hint.id = 'music-play-hint';
+    hint.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        z-index: 10000;
+        text-align: center;
+        max-width: 300px;
+    `;
+    hint.innerHTML = `
+        <div style="margin-bottom: 15px;">🎵 點擊任意位置開始播放背景音樂</div>
+        <button onclick="this.parentElement.remove(); toggleMusic();" 
+                style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            開始播放
+        </button>
+    `;
+    document.body.appendChild(hint);
+    
+    // 3秒後自動移除提示
+    setTimeout(() => {
+        if (hint.parentElement) {
+            hint.remove();
+        }
+    }, 5000);
+}
+
+function createMusicControls() {
+    // 檢查是否已存在音樂控制按鈕
+    let musicContainer = document.getElementById('musicControls');
+    if (musicContainer) return musicContainer; // 只建立一次
+
+    // 創建音樂控制容器
+    musicContainer = document.createElement('div');
+    musicContainer.id = 'musicControls';
+    musicContainer.style.cssText = `
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 200px;
+    `;
+
+    // 音樂標題
+    const musicTitle = document.createElement('div');
+    musicTitle.textContent = '🎵 背景音樂';
+    musicTitle.style.cssText = `
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 10px;
+        color: #333;
+        font-size: 16px;
+    `;
+
+    // 播放/暫停按鈕
+    const playPauseBtn = document.createElement('button');
+    playPauseBtn.id = 'playPauseBtn';
+    playPauseBtn.innerHTML = isMusicPlaying ? '⏸️ 暫停' : '▶️ 播放';
+    playPauseBtn.style.cssText = `
+        padding: 8px 12px;
+        border: none;
+        border-radius: 5px;
+        background: ${isMusicPlaying ? '#f44336' : '#4CAF50'};
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.3s;
+    `;
+    playPauseBtn.onclick = function() {
+        toggleMusic();
+        updateMusicButton();
+    };
+
+    // 音樂類型選擇器
+    const musicTypeContainer = document.createElement('div');
+    musicTypeContainer.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    `;
+
+    const musicTypeLabel = document.createElement('label');
+    musicTypeLabel.textContent = '音樂類型:';
+    musicTypeLabel.style.cssText = `
+        font-weight: bold;
+        color: #333;
+        font-size: 14px;
+    `;
+
+    const musicTypeSelect = document.createElement('select');
+    musicTypeSelect.id = 'musicTypeSelect';
+    musicTypeSelect.style.cssText = `
+        padding: 5px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    `;
+
+    // 添加音樂選項
+    Object.keys(musicTypeNames).forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = musicTypeNames[type];
+        if (type === currentMusicType) {
+            option.selected = true;
+        }
+        musicTypeSelect.appendChild(option);
+    });
+
+    musicTypeSelect.onchange = function() {
+        changeMusicType(this.value);
+        updateMusicButton();
+    };
+
+    musicTypeContainer.appendChild(musicTypeLabel);
+    musicTypeContainer.appendChild(musicTypeSelect);
+
+    // 音量控制
+    const volumeContainer = document.createElement('div');
+    volumeContainer.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    `;
+
+    const volumeLabel = document.createElement('label');
+    volumeLabel.textContent = '🔊 音量:';
+    volumeLabel.style.cssText = `
+        font-weight: bold;
+        color: #333;
+        font-size: 14px;
+    `;
+
+    const volumeSlider = document.createElement('input');
+    volumeSlider.type = 'range';
+    volumeSlider.min = '0';
+    volumeSlider.max = '100';
+    volumeSlider.value = musicVolume * 100;
+    volumeSlider.style.cssText = `
+        width: 100%;
+        height: 4px;
+        border-radius: 2px;
+        background: #ddd;
+        outline: none;
+    `;
+    volumeSlider.oninput = function() {
+        musicVolume = this.value / 100;
+        if (backgroundMusic) {
+            backgroundMusic.volume = musicVolume;
+        }
+    };
+
+    // 音量條同步
+    setInterval(() => {
+        if (backgroundMusic && volumeSlider.value != backgroundMusic.volume * 100) {
+            volumeSlider.value = backgroundMusic.volume * 100;
+        }
+    }, 1000);
+
+    volumeContainer.appendChild(volumeLabel);
+    volumeContainer.appendChild(volumeSlider);
+
+    // 組裝音樂控制
+    musicContainer.appendChild(musicTitle);
+    musicContainer.appendChild(playPauseBtn);
+    musicContainer.appendChild(musicTypeContainer);
+    musicContainer.appendChild(volumeContainer);
+
+    return musicContainer;
+}
+
+function changeMusicType(musicType) {
+    if (!backgroundMusic || musicType === currentMusicType) return;
+    
+    currentMusicType = musicType;
+    const wasPlaying = isMusicPlaying;
+    
+    // 暫停當前音樂
+    if (isMusicPlaying) {
+        backgroundMusic.pause();
+    }
+    
+    // 載入新音樂
+    backgroundMusic.src = musicFiles[musicType];
+    backgroundMusic.load();
+    
+    // 如果之前在播放，則播放新音樂
+    if (wasPlaying) {
+        backgroundMusic.play().then(() => {
+            isMusicPlaying = true;
+            updateMusicButton();
+        }).catch(error => {
+            console.warn('切換音樂失敗:', error);
+        });
+    }
+}
+
+function updateMusicButton() {
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    if (playPauseBtn) {
+        if (isMusicPlaying) {
+            playPauseBtn.innerHTML = '⏸️ 暫停';
+            playPauseBtn.style.background = '#f44336';
+        } else {
+            playPauseBtn.innerHTML = '▶️ 播放';
+            playPauseBtn.style.background = '#4CAF50';
+        }
+    }
+    // 音量條同步
+    const volumeSlider = document.querySelector('#musicControls input[type="range"]');
+    if (volumeSlider && backgroundMusic) {
+        volumeSlider.value = backgroundMusic.volume * 100;
+    }
+}
+
+function toggleMusic() {
+    if (!backgroundMusic) return;
+    if (isMusicPlaying) {
+        backgroundMusic.pause();
+        isMusicPlaying = false;
+    } else {
+        backgroundMusic.play().catch(error => {
+            console.warn('無法播放背景音樂:', error);
+            alert('請點擊頁面任意位置以啟用音樂播放');
+        });
+        isMusicPlaying = true;
+    }
+    updateMusicButton();
+}
+
+function stopMusic() {
+    if (backgroundMusic && isMusicPlaying) {
+        backgroundMusic.pause();
+        isMusicPlaying = false;
+        updateMusicButton();
+    }
+}
+
+// 當頁面載入完成後初始化背景音樂
+document.addEventListener('DOMContentLoaded', function() {
+    // 延遲初始化，確保頁面完全載入
+    setTimeout(initBackgroundMusic, 1000);
+});
+
 // 記錄訪問
 async function recordVisit(language) {
     if (counterFunctionalityDisabled) {
@@ -37,7 +351,7 @@ function getLangFromUrl() {
     return params.get('lang');
 }
 let apiKey = '';
-let currentLanguage = '';
+let currentLanguage = 'zh-Hant';
 const counterApiPath = '/api/counter';
 let counterFunctionalityDisabled = false;
 
@@ -131,9 +445,9 @@ let emotionHistory = []; // 用於記錄情緒列表歷史
 let usedEmotions = new Set(); // 記錄已使用過的情緒
 let otherSituationClickCount = 0; // 追蹤「我有其他狀況」按鈕點擊次數
 
-/**
- * 在主畫面下方持久顯示自定義情緒輸入框（不會清空情緒按鈕）
- */
+
+ // 在主畫面下方持久顯示自定義情緒輸入框（不會清空情緒按鈕）
+ 
 function renderPersistentCustomEmotionInput() {
     // 檢查是否已經存在
     if (document.getElementById('persistentCustomEmotionInputContainer')) return;
@@ -187,35 +501,99 @@ function renderPersistentCustomEmotionInput() {
     container.appendChild(inputContainer);
 }
 
+    
+
 // 初始化獲取首頁情緒
 async function initEmotions() {
-    await loadApiKey();
+  await loadApiKey();
 
-    // 創建語言選擇器
-    createLanguageSelector();
+  createLanguageSelector();
+  await recordVisit(currentLanguage);
+  
+  // 初始化背景音樂
+  initBackgroundMusic();
 
-    // 記錄訪問
-    await recordVisit(currentLanguage);
+  const promptByLang = {
+    'zh-Hant': '首次訪問，請推薦5個常見的情緒狀態',
+    'zh-Hans': '首次访问，请推荐5个常见的情绪状态',
+    'en': 'First visit, please recommend 5 common emotional states',
+    'ja': '初回訪問、一般的な感情状態を5つ推薦してください',
+    'ko': '첫 방문, 일반적인 감정 상태 5가지를 추천해 주세요',
+    'de': 'Erster Besuch, bitte empfehlen Sie 5 häufige emotionale Zustände',
+    'fr': 'Première visite, veuillez recommander 5 états émotionnels courants',
+    'it': 'Prima visita, si prega di consigliare 5 stati emotivi comuni',
+    'nl': 'Eerste bezoek, adviseer alstublieft 5 veelvoorkomende emotionele toestanden',
+    'es': 'Primera visita, por favor recomiende 5 estados emocionales comunes'
+  };
+  const prompt = promptByLang[getCurrentLanguage()] || promptByLang['zh-Hant'];
 
-    // 獲取情緒列表
-    const promptByLang = {
-        'zh-Hant': '首次訪問，請推薦5個常見的情緒狀態',
-        'zh-Hans': '首次访问，请推荐5个常见的情绪状态',
-        'en': 'First visit, please recommend 5 common emotional states',
-        'ja': '初回訪問、一般的な感情状態を5つ推薦してください',
-        'ko': '첫 방문, 일반적인 감정 상태 5가지를 추천해 주세요',
-        'de': 'Erster Besuch, bitte empfehlen Sie 5 häufige emotionale Zustände',
-        'fr': 'Première visite, veuillez recommander 5 états émotionnels courants',
-        'it': 'Prima visita, si prega di consigliare 5 stati emotivi comuni',
-        'nl': 'Eerste bezoek, adviseer alstublieft 5 veelvoorkomende emotionele toestanden',
-        'es': 'Primera visita, por favor recomiende 5 estados emocionales comunes'
-    };
+  const emotionsByLang = {
+    'zh-Hant': ['焦慮', '悲傷', '孤獨', '壓力', '喜樂', t('otherSituation')],
+    'zh-Hans': ['焦虑', '悲伤', '孤独', '压力', '喜乐', t('otherSituation')],
+    'en': ['Anxiety', 'Sadness', 'Loneliness', 'Stress', 'Joy', t('otherSituation')],
+    'ja': ['不安', '悲しみ', '孤独', 'ストレス', '喜び', t('otherSituation')],
+    'ko': ['불안', '슬픔', '외로움', '스트레스', '기쁨', t('otherSituation')],
+    'de': ['Angst', 'Traurigkeit', 'Einsamkeit', 'Stress', 'Freude', t('otherSituation')],
+    'fr': ['Anxiété', 'Tristesse', 'Solitude', 'Stress', 'Joie', t('otherSituation')],
+    'it': ['Ansia', 'Tristezza', 'Solitudine', 'Stress', 'Gioia', t('otherSituation')],
+    'nl': ['Angst', 'Verdriet', 'Eenzaamheid', 'Stress', 'Vreugde', t('otherSituation')],
+    'es': ['Ansiedad', 'Tristeza', 'Soledad', 'Estrés', 'Alegría', t('otherSituation')]
+  };
+  const currentEmotions = emotionsByLang[getCurrentLanguage()] || emotionsByLang['zh-Hant'];
+  emotionHistory.push(currentEmotions);
 
-    const prompt = promptByLang[currentLanguage] || promptByLang['zh-Hant'];
-    const firstEmotions = await generateEmotions(prompt, true);
-    emotionHistory.push(firstEmotions);
-    createEmotionButtons(firstEmotions);
+  let selectedEmotion = null; // 作用域提升
+
+  if (window.EmotionTree) {
+    EmotionTree({
+      emotions: currentEmotions,
+      onSelect: (emotionText) => {
+        selectedEmotion = emotionText;
+        // 可加上高亮效果
+      },
+      containerId: 'mainEmotions'
+    });
+
     renderPersistentCustomEmotionInput();
+
+    // 綁定提交事件（確保元素已存在）
+    const submitBtn = document.getElementById('emotionSubmit');
+    if (submitBtn) {
+      submitBtn.onclick = () => {
+        const value = document.getElementById('persistentCustomEmotionInput').value.trim();
+        if (!selectedEmotion) {
+          alert('請先選擇一個情緒');
+          return;
+        }
+        if (!value) {
+          alert('請輸入您的想法');
+          return;
+        }
+        getEmotionalVerse(`${selectedEmotion}｜${value}`, true);
+      };
+    }
+  } else {
+    console.error('EmotionTree is not defined');
+  }
+}
+
+
+function drawConnectors(branchCoords, btnIds) {
+  const svg = document.getElementById('emotionConnectors');
+  svg.innerHTML = '';
+  branchCoords.forEach((coord, idx) => {
+    const btn = document.getElementById(btnIds[idx]);
+    if (!btn) return;
+    const btnRect = btn.getBoundingClientRect();
+    const svgRect = svg.getBoundingClientRect();
+    // 按鈕中心點
+    const btnX = btnRect.left + btnRect.width / 2 - svgRect.left;
+    const btnY = btnRect.top + btnRect.height / 2 - svgRect.top;
+    // 樹葉 SVG 座標（coord.x, coord.y）
+    svg.innerHTML += `
+      <line x1="${coord.x}" y1="${coord.y}" x2="${btnX}" y2="${btnY}" stroke="#3399ff" stroke-width="2" />
+    `;
+  });
 }
 
 // 創建語言選擇器
@@ -229,6 +607,9 @@ function createLanguageSelector() {
     langContainer.style.position = 'absolute';
     langContainer.style.top = '10px';
     langContainer.style.right = '10px';
+    langContainer.style.display = 'flex';
+    langContainer.style.flexDirection = 'column';
+    langContainer.style.gap = '10px';
     
     // 創建語言選擇標籤
     const langLabel = document.createElement('span');
@@ -263,24 +644,29 @@ function createLanguageSelector() {
         langSelector.appendChild(option);
     });
     
-// 添加語言切換事件
-langSelector.addEventListener('change', function() {
-    const newLanguage = this.value;
-    setCurrentLanguage(newLanguage);
-    // 記錄新語言的訪問
-    recordVisit(newLanguage);
-    // 重新加載情緒按鈕
-    resetEmotionSelection();
-});
+    // 添加語言切換事件
+    langSelector.addEventListener('change', function() {
+        const newLanguage = this.value;
+        setCurrentLanguage(newLanguage);
+        recordVisit(newLanguage);
+        resetEmotionSelection();
+    });
     
     // 組裝語言選擇器
     langContainer.appendChild(langLabel);
     langContainer.appendChild(langSelector);
     
+    // 創建音樂控制面板並添加到語言選擇器下面
+    const musicControls = createMusicControls();
+    if (musicControls) {
+        langContainer.appendChild(musicControls);
+    }
+    
     // 添加到頁面
     document.body.appendChild(langContainer);
 }
 
+/*
 // 用API生成情緒列表
 async function generateEmotions(context, isFirst = false) {
     // 直接呼叫後端 API 產生情緒，不再由前端呼叫 Groq API 或檢查金鑰
@@ -320,113 +706,11 @@ async function generateEmotions(context, isFirst = false) {
         return fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
     }
 }
+*/
 
 
-// 創建動態按鈕
-function createEmotionButtons(emotions) {
-    const container = document.getElementById('mainEmotions');
-    container.innerHTML = '';
-    
-    emotions.forEach(emotion => {
-        const btn = document.createElement('button');
-        btn.textContent = emotion;
-        btn.onclick = () => {
-        if (emotion === t('otherSituation') || 
-           emotion === '我有其他狀況' || 
-           emotion === '我有其他状况' || 
-           emotion === 'I have another situation' ||
-           emotion === '他の状況があります' ||
-           emotion === '다른 상황이 있어요' ||
-           emotion === 'Ich habe eine andere Situation' ||
-           emotion === 'J\'ai une autre situation' ||
-           emotion === 'Ho un\'altra situazione' ||
-           emotion === 'Ik heb een andere situatie' ||
-           emotion === 'Tengo otra situación') {
-                loadMoreEmotions();
-            } else {
-                getEmotionalVerse(emotion, true);
-            }
-        };
-        if (emotion === t('otherSituation') || 
-           emotion === '我有其他狀況' || 
-           emotion === '我有其他状况' || 
-           emotion === 'I have another situation' ||
-           emotion === '他の状況があります' ||
-           emotion === '다른 상황이 있어요' ||
-           emotion === 'Ich habe eine andere Situation' ||
-           emotion === 'J\'ai une autre situation' ||
-           emotion === 'Ho un\'altra situazione' ||
-           emotion === 'Ik heb een andere situatie' ||
-           emotion === 'Tengo otra situación') {
-            btn.style.backgroundColor = '#2196F3';
-        }
-        container.appendChild(btn);
-    });
-}
 
-// 加載更多情緒
-async function loadMoreEmotions() {
-    try {
-        otherSituationClickCount++; // 增加點擊計數
-        
-        // 第三次點擊時顯示輸入框
-        if (otherSituationClickCount >= 3) {
-            showCustomEmotionInput();
-            return;
-        }
-        
-        document.getElementById('mainEmotions').innerHTML = t('loadingEmotions');
-        const newEmotions = await generateEmotions('需要不同於之前的情緒狀態');
-        emotionHistory.push(newEmotions);
-        createEmotionButtons(newEmotions);
-        document.getElementById('backButton').style.display = 'inline-block';
-    } catch (error) {
-        alert('無法加載更多情緒');
-    }
-}
 
-// 顯示自定義情緒輸入框
-function showCustomEmotionInput() {
-    const container = document.getElementById('mainEmotions');
-    container.innerHTML = '';
-    
-    // 創建輸入框
-    const inputContainer = document.createElement('div');
-    inputContainer.style.margin = '20px auto';
-    inputContainer.style.maxWidth = '500px';
-    
-    const label = document.createElement('p');
-    label.textContent = t('customEmotionLabel');
-    label.style.marginBottom = '10px';
-    label.style.fontWeight = 'bold';
-    
-    const textarea = document.createElement('textarea');
-    textarea.id = 'customEmotionInput';
-    textarea.style.width = '100%';
-    textarea.style.minHeight = '100px';
-    textarea.style.padding = '10px';
-    textarea.style.borderRadius = '8px';
-    textarea.style.border = '1px solid #ccc';
-    textarea.style.marginBottom = '15px';
-    textarea.style.fontFamily = 'inherit';
-    
-    const submitBtn = document.createElement('button');
-    submitBtn.textContent = t('submitButton');
-    submitBtn.style.backgroundColor = '#2196F3';
-    submitBtn.onclick = submitCustomEmotion;
-    
-    const resetBtn = document.createElement('button');
-    resetBtn.textContent = t('resetButton');
-    resetBtn.style.backgroundColor = '#666';
-    resetBtn.onclick = resetEmotionSelection;
-    
-    inputContainer.appendChild(label);
-    inputContainer.appendChild(textarea);
-    inputContainer.appendChild(submitBtn);
-    inputContainer.appendChild(resetBtn);
-    
-    container.appendChild(inputContainer);
-}
 
 // 提交自定義情緒
 function submitCustomEmotion() {
@@ -441,9 +725,12 @@ function submitCustomEmotion() {
 // 重置情緒選擇
 function resetEmotionSelection() {
     otherSituationClickCount = 0; // 重置計數器
-    initEmotions(); // 重新初始化情緒按鈕
+    // 重新初始化情緒按鈕
+    // 這裡直接呼叫 initEmotions 即可，因為它已經根據語言產生情緒按鈕
+    initEmotions();
     document.getElementById('backButton').style.display = 'none';
     document.getElementById('verse').innerHTML = ''; // 清空經文區域
+    renderPersistentCustomEmotionInput();
 }
 
 // 返回上一個情緒列表
@@ -451,7 +738,7 @@ function showPreviousEmotions() {
     if (emotionHistory.length > 1) {
         emotionHistory.pop(); // 移除當前列表
         const prevEmotions = emotionHistory[emotionHistory.length-1];
-        createEmotionButtons(prevEmotions);
+        
         
         // 如果返回到第一個情緒列表，重置計數器
         if (emotionHistory.length === 1) {
@@ -590,6 +877,7 @@ async function getEmotionalVerse(emotion, isFirst = false) {
     if (isFirst) {
         prayerSegments = [];
         prayerEmotion = emotion;
+        window.prayerEmotion = emotion; // 全域同步
     }
     // 計算第幾段
     const segmentNumber = prayerSegments.length + 1;
@@ -827,49 +1115,38 @@ function renderPrayerLoading() {
  * 播放指定段落的禱告詞
  */
 async function playPrayerSegment(idx) {
-    // 前端不再檢查 apiKey
     const seg = prayerSegments[idx];
     const button = document.getElementById(`play-button-${idx}`);
     const spinner = document.getElementById(`loading-spinner-${idx}`);
     const playText = document.getElementById(`play-text-${idx}`);
-    const voiceSelector = document.getElementById(`voice-selector-${idx}`);
-    const selectedVoice = voiceSelector ? voiceSelector.value : seg.voice;
-
-    // 記錄音頻生成事件
-    await recordAudioGeneration(currentLanguage);
 
     try {
         button.disabled = true;
         playText.style.display = 'none';
         spinner.style.display = 'inline';
 
-        // 準備API請求體
-        const requestBody = {
-            model: "tts-1",
-            voice: selectedVoice,
-            input: seg.text,
-            response_format: "mp3"
-        };
-        if (seg.instructions) {
-            requestBody.instructions = seg.instructions;
-        }
-        const response = await fetch('/api/audio', {
+        // 呼叫 Google TTS API
+        const ttsRes = await fetch('/api/google-tts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({
+                text: seg.text,
+                languageCode: 'zh-TW' // 可根據 currentLanguage 調整
+            })
         });
-// 處理回傳的音訊資料
-
-
-        const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(new Blob([audioBlob], { type: 'audio/mpeg' }));
+        const ttsData = await ttsRes.json();
+        if (!ttsRes.ok || !ttsData.audioContent) {
+            throw new Error(ttsData.error || 'Google TTS 產生語音失敗');
+        }
+        // 播放 base64 mp3
         const audioElement = document.getElementById(`prayer-audio-${idx}`);
-        audioElement.src = audioUrl;
+        audioElement.src = `data:audio/mp3;base64,${ttsData.audioContent}`;
         audioElement.style.display = 'block';
+        audioElement.load();
         audioElement.play();
     } catch (error) {
         console.error('播放失敗:', error);
-        alert(t('audioPlayError'));
+        alert(`${t('audioPlayError')}` + (error && error.message ? ('\n' + error.message) : ''));
     } finally {
         button.disabled = false;
         playText.style.display = 'inline';
@@ -879,55 +1156,37 @@ async function playPrayerSegment(idx) {
 
 // 修改playPrayer函數
 async function playPrayer(encodedText, encodedInstructions = '') {
-    // 前端不再檢查 apiKey
-    
     const button = document.getElementById('play-button');
     const spinner = document.getElementById('loading-spinner');
     const playText = document.getElementById('play-text');
-    const voiceSelector = document.getElementById('voice-selector');
-    const selectedVoice = voiceSelector ? voiceSelector.value : 'alloy';
-    
-    // 記錄音頻生成事件
-    await recordAudioGeneration(currentLanguage);
-    
+
     try {
         button.disabled = true;
         playText.style.display = 'none';
         spinner.style.display = 'inline';
-        
+
         const text = decodeURIComponent(encodedText);
-        const instructions = encodedInstructions ? decodeURIComponent(encodedInstructions) : '';
-        
-        // 準備API請求體
-        const requestBody = {
-            model: "tts-1",
-            voice: selectedVoice,
-            input: text,
-            response_format: "mp3"
-        };
-        
-        // 如果有語音指令，添加到請求中
-        if (instructions) {
-            requestBody.instructions = instructions;
-        }
-        
-        const response = await fetch('/api/audio', {
+        // 呼叫 Google TTS API
+        const ttsRes = await fetch('/api/google-tts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({
+                text,
+                languageCode: 'zh-TW'
+            })
         });
-// 處理回傳的音訊資料
-
-
-        const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(new Blob([audioBlob], { type: 'audio/mpeg' }));
+        const ttsData = await ttsRes.json();
+        if (!ttsRes.ok || !ttsData.audioContent) {
+            throw new Error(ttsData.error || 'Google TTS 產生語音失敗');
+        }
         const audioElement = document.getElementById('prayer-audio');
-        audioElement.src = audioUrl;
+        audioElement.src = `data:audio/mp3;base64,${ttsData.audioContent}`;
         audioElement.style.display = 'block';
+        audioElement.load();
         audioElement.play();
     } catch (error) {
         console.error('播放失敗:', error);
-        alert(t('audioPlayError'));
+        alert(`${t('audioPlayError')}` + (error && error.message ? ('\n' + error.message) : ''));
     } finally {
         button.disabled = false;
         playText.style.display = 'inline';
@@ -979,3 +1238,16 @@ window.onload = async function() {
         console.error('初始化失敗:', e);
     }
 };
+
+// 最後掛載全域函數，確保宣告已存在
+window.getEmotionalVerse = getEmotionalVerse;
+window.playPrayerSegment = playPrayerSegment;
+window.prayerEmotion = '';
+window.playPrayer = playPrayer;
+
+// 背景音樂相關函數
+window.toggleMusic = toggleMusic;
+window.stopMusic = stopMusic;
+window.initBackgroundMusic = initBackgroundMusic;
+
+

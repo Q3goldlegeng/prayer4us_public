@@ -153,44 +153,49 @@ app.post('/api/groq', async (req, res) => {
   }
 });
 
-// --- /api/audio: 代理 Groq audio/speech ---
-app.post('/api/audio', async (req, res) => {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'Groq API key not set in environment.' });
-  }
-  const { model, voice, input, response_format, instructions } = req.body;
-  if (!model || !voice || !input || !response_format) {
-    return res.status(400).json({ error: 'Missing required audio parameters.' });
-  }
 
+// --- /api/google-tts: Google Cloud Text-to-Speech ---
+const { GoogleAuth } = require('google-auth-library');
+const GOOGLE_TTS_API_KEY = process.env.GOOGLE_TTS_API_KEY;
+
+app.post('/api/google-tts', async (req, res) => {
+  const { text, languageCode = 'zh-TW', voiceName, speakingRate = 1.0 } = req.body;
+  if (!GOOGLE_TTS_API_KEY) {
+    return res.status(500).json({ error: 'Google TTS API key not set in environment.' });
+  }
+  if (!text || typeof text !== 'string' || !text.trim()) {
+    return res.status(400).json({ error: 'Missing or invalid text.' });
+  }
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Accept': 'audio/mpeg'
+    const apiUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_TTS_API_KEY}`;
+    const ttsBody = {
+      input: { text },
+      voice: {
+        languageCode,
+        name: voiceName || undefined // 可選: 指定 voiceName
       },
-      body: JSON.stringify({
-        model,
-        voice,
-        input,
-        response_format,
-        ...(instructions ? { instructions } : {})
-      })
+      audioConfig: {
+        audioEncoding: 'MP3',
+        speakingRate
+      }
+    };
+    const ttsRes = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ttsBody)
     });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      return res.status(500).json({ error: 'Groq Audio API error', detail: errText });
+    if (!ttsRes.ok) {
+      const errText = await ttsRes.text();
+      return res.status(500).json({ error: 'Google TTS API error', detail: errText });
     }
-
-    // Stream audio to frontend
-    res.setHeader('Content-Type', 'audio/mpeg');
-    response.body.pipe(res);
+    const ttsData = await ttsRes.json();
+    if (!ttsData.audioContent) {
+      return res.status(500).json({ error: 'No audioContent in TTS response.' });
+    }
+    // 回傳 base64 音訊
+    res.json({ audioContent: ttsData.audioContent });
   } catch (err) {
-    res.status(500).json({ error: 'Audio API call failed', detail: err.message });
+    res.status(500).json({ error: 'Google TTS call failed', detail: err.message });
   }
 });
 

@@ -16,6 +16,7 @@
     "@vercel/speed-insights": "^1.2.0",
     "dotenv": "^16.0.3",
     "express": "^4.21.2",
+    "google-auth-library": "^10.1.0",
     "next": "^15.2.4",
     "node-fetch": "^3.3.2",
     "react": "^19.1.0",

@@ -93,7 +93,7 @@ button:active {
 }
 
 #verse::before {
-    content: """;
+    content: "";
     position: absolute;
     top: -30px;
     left: 20px;
@@ -103,7 +103,7 @@ button:active {
 }
 
 #verse::after {
-    content: """;
+    content: "";
     position: absolute;
     bottom: -80px;
     right: 20px;
@@ -380,39 +380,39 @@ button[style*="background-color: #2196F3"]:hover {
     body {
         padding: 10px;
     }
-    
+
     h1 {
         font-size: 2rem;
         margin-top: 30px;
     }
-    
+
     #buttons {
         padding: 15px;
         width: 90%;
     }
-    
+
     button {
         padding: 12px 20px;
         font-size: 14px;
         margin: 6px;
     }
-    
+
     #verse {
         padding: 20px;
         margin: 20px auto;
         width: 90%;
     }
-    
+
     #verse p {
         padding: 12px 15px;
     }
-    
+
     #languageContainer {
         top: 10px;
         right: 10px;
         padding: 5px 10px;
     }
-    
+
     #languageSelector {
         padding: 5px 8px;
         font-size: 12px;
@@ -421,11 +421,19 @@ button[style*="background-color: #2196F3"]:hover {
 
 /* 動畫效果 */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-#buttons, #verse {
+#buttons,
+#verse {
     animation: fadeIn 0.8s ease-out forwards;
 }
 
@@ -435,9 +443,82 @@ button[style*="background-color: #2196F3"]:hover {
     opacity: 0;
 }
 
-#mainEmotions button:nth-child(1) { --btn-index: 1; }
-#mainEmotions button:nth-child(2) { --btn-index: 2; }
-#mainEmotions button:nth-child(3) { --btn-index: 3; }
-#mainEmotions button:nth-child(4) { --btn-index: 4; }
-#mainEmotions button:nth-child(5) { --btn-index: 5; }
-#mainEmotions button:nth-child(6) { --btn-index: 6; }
+#mainEmotions button:nth-child(1) {
+    --btn-index: 1;
+}
+
+#mainEmotions button:nth-child(2) {
+    --btn-index: 2;
+}
+
+#mainEmotions button:nth-child(3) {
+    --btn-index: 3;
+}
+
+#mainEmotions button:nth-child(4) {
+    --btn-index: 4;
+}
+
+#mainEmotions button:nth-child(5) {
+    --btn-index: 5;
+}
+
+#mainEmotions button:nth-child(6) {
+    --btn-index: 6;
+}
+
+.emotion-tree-btn:focus {
+    outline: 2px solid #1976d2;
+    outline-offset: 2px;
+}
+
+/* EmotionTree 透明互動按鈕樣式 */
+.emotion-tree-btn {
+    fill: transparent !important;
+    stroke: none !important;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+/* 讓SVG按鈕的文字有平滑動畫 */
+.emotion-tree-label {
+    transition: fill 0.3s, font-size 0.3s;
+    font-size: 16px;
+    fill: #1565c0;
+    pointer-events: none;
+}
+
+/* 滑鼠移到圓形時，對應文字變大 */
+.emotion-tree-btn:hover+text,
+.emotion-tree-btn:focus+text {
+    font-size: 20px;
+}
+
+/* 選取後，對應文字變深色、加粗 */
+.emotion-tree-label.selected {
+    fill: #0d47a1;
+    font-weight: bold;
+}
+
+.emotion-float-btn {
+  padding: 8px 24px;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  background: #fff;
+  color: #3399ff;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.emotion-float-btn:hover {
+  background: #e0f0ff;
+}
+#emotionLabels {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
