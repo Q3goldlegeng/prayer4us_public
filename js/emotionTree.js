@@ -199,6 +199,12 @@ function EmotionTree({ emotions, onSelect, containerId = 'mainEmotions' }) {
   let doveEl = null;
   let doveX = null, doveY = null;
   function showDove(x, y) {
+    // 播放鴿子音效
+    try {
+      const doveAudio = new Audio('assets/dove.mp3');
+      doveAudio.volume = 0.7;
+      doveAudio.play();
+    } catch (e) { console.warn('dove 音效播放失敗', e); }
     // 如果已經有 dove，做動畫移動
     if (!doveEl) {
       doveEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');

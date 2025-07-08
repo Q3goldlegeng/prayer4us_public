@@ -9,9 +9,9 @@ let currentMusicType = 'piano'; // 預設音樂類型
 
 // 音樂檔案列表
 const musicFiles = {
-    piano: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
-    water: 'https://www.soundjay.com/misc/sounds/water-flowing-1.wav',
-    forest: 'https://www.soundjay.com/misc/sounds/meditation-bell-1.wav'
+    piano: 'assets/piano1.mp3',
+    water: 'assets/rain1.mp3',
+    forest: 'assets/nature1.mp3'
 };
 
 // 音樂類型顯示名稱
@@ -32,64 +32,29 @@ function initBackgroundMusic() {
     backgroundMusic.src = musicFiles[currentMusicType];
     
     // 載入音樂並處理錯誤
-    backgroundMusic.load();
     backgroundMusic.onerror = function() {
         console.warn('背景音樂載入失敗，使用備用音樂');
         backgroundMusic.src = 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav';
     };
     
-    // 自動播放音樂
-    setTimeout(() => {
-        autoPlayMusic();
-    }, 1000);
-}
-
-function autoPlayMusic() {
-    if (backgroundMusic && !isMusicPlaying) {
-        backgroundMusic.play().then(() => {
-            isMusicPlaying = true;
-            updateMusicButton();
-        }).catch(error => {
-            console.warn('自動播放失敗，需要用戶互動:', error);
-            // 如果自動播放失敗，顯示提示
-            showMusicPlayHint();
-        });
-    }
-}
-
-function showMusicPlayHint() {
-    // 創建提示訊息
-    const hint = document.createElement('div');
-    hint.id = 'music-play-hint';
-    hint.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        z-index: 10000;
-        text-align: center;
-        max-width: 300px;
-    `;
-    hint.innerHTML = `
-        <div style="margin-bottom: 15px;">🎵 點擊任意位置開始播放背景音樂</div>
-        <button onclick="this.parentElement.remove(); toggleMusic();" 
-                style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
-            開始播放
-        </button>
-    `;
-    document.body.appendChild(hint);
+    // 靜默載入音樂，不自動播放
+    backgroundMusic.load();
     
-    // 3秒後自動移除提示
-    setTimeout(() => {
-        if (hint.parentElement) {
-            hint.remove();
+    // 監聽用戶互動事件來啟用音樂
+    document.addEventListener('click', function enableMusic() {
+        if (!isMusicPlaying && backgroundMusic) {
+            backgroundMusic.play().then(() => {
+                isMusicPlaying = true;
+                updateMusicButton();
+            }).catch(error => {
+                console.warn('音樂播放失敗:', error);
+            });
         }
-    }, 5000);
+        document.removeEventListener('click', enableMusic);
+    }, { once: true });
 }
+
+
 
 function createMusicControls() {
     // 檢查是否已存在音樂控制按鈕
@@ -138,7 +103,6 @@ function createMusicControls() {
     `;
     playPauseBtn.onclick = function() {
         toggleMusic();
-        updateMusicButton();
     };
 
     // 音樂類型選擇器
@@ -179,7 +143,6 @@ function createMusicControls() {
 
     musicTypeSelect.onchange = function() {
         changeMusicType(this.value);
-        updateMusicButton();
     };
 
     musicTypeContainer.appendChild(musicTypeLabel);
@@ -222,8 +185,8 @@ function createMusicControls() {
 
     // 音量條同步
     setInterval(() => {
-        if (backgroundMusic && volumeSlider.value != backgroundMusic.volume * 100) {
-            volumeSlider.value = backgroundMusic.volume * 100;
+        if (backgroundMusic && volumeSlider.value != Math.round(backgroundMusic.volume * 100)) {
+            volumeSlider.value = Math.round(backgroundMusic.volume * 100);
         }
     }, 1000);
 
@@ -241,28 +204,23 @@ function createMusicControls() {
 
 function changeMusicType(musicType) {
     if (!backgroundMusic || musicType === currentMusicType) return;
-    
+
+    // 先暫停並重設音樂
+    backgroundMusic.pause();
+    backgroundMusic.currentTime = 0;
+    isMusicPlaying = false;
+
     currentMusicType = musicType;
-    const wasPlaying = isMusicPlaying;
-    
-    // 暫停當前音樂
-    if (isMusicPlaying) {
-        backgroundMusic.pause();
-    }
-    
-    // 載入新音樂
     backgroundMusic.src = musicFiles[musicType];
     backgroundMusic.load();
-    
-    // 如果之前在播放，則播放新音樂
-    if (wasPlaying) {
-        backgroundMusic.play().then(() => {
-            isMusicPlaying = true;
-            updateMusicButton();
-        }).catch(error => {
-            console.warn('切換音樂失敗:', error);
-        });
-    }
+
+    // 自動播放新音樂
+    backgroundMusic.play().then(() => {
+        isMusicPlaying = true;
+        updateMusicButton();
+    }).catch(error => {
+        console.warn('切換音樂失敗:', error);
+    });
 }
 
 function updateMusicButton() {
@@ -276,26 +234,40 @@ function updateMusicButton() {
             playPauseBtn.style.background = '#4CAF50';
         }
     }
+    
     // 音量條同步
     const volumeSlider = document.querySelector('#musicControls input[type="range"]');
     if (volumeSlider && backgroundMusic) {
-        volumeSlider.value = backgroundMusic.volume * 100;
+        volumeSlider.value = Math.round(backgroundMusic.volume * 100);
     }
+    
+    console.log('按鈕狀態已更新，播放狀態:', isMusicPlaying);
 }
 
 function toggleMusic() {
-    if (!backgroundMusic) return;
+    if (!backgroundMusic) {
+        console.warn('背景音樂未初始化');
+        return;
+    }
+    
     if (isMusicPlaying) {
         backgroundMusic.pause();
         isMusicPlaying = false;
+        console.log('音樂已暫停');
     } else {
-        backgroundMusic.play().catch(error => {
+        backgroundMusic.play().then(() => {
+            isMusicPlaying = true;
+            console.log('音樂已播放');
+        }).catch(error => {
             console.warn('無法播放背景音樂:', error);
             alert('請點擊頁面任意位置以啟用音樂播放');
         });
-        isMusicPlaying = true;
     }
-    updateMusicButton();
+    
+    // 立即更新按鈕狀態
+    setTimeout(() => {
+        updateMusicButton();
+    }, 100);
 }
 
 function stopMusic() {
@@ -876,9 +848,10 @@ async function getEmotionalVerse(emotion, isFirst = false) {
     // 前端不再檢查 apiKey
     if (isFirst) {
         prayerSegments = [];
-        prayerEmotion = emotion;
-        window.prayerEmotion = emotion; // 全域同步
     }
+    // 無論是否為第一次，都要更新 prayerEmotion
+    prayerEmotion = emotion;
+    window.prayerEmotion = emotion; // 全域同步
     // 計算第幾段
     const segmentNumber = prayerSegments.length + 1;
     // 設定禱告詞長度
@@ -1022,9 +995,23 @@ function renderPrayerSegments(scripture, explanation) {
     let html = '';
     // 如果有主題經文與解說，顯示在最上方
     if (typeof scripture === 'string' && typeof explanation === 'string') {
+        // 解析情緒和困難狀況
+        let displayEmotion = prayerEmotion;
+        let displaySituation = '';
+        
+        console.log('prayerEmotion:', prayerEmotion); // 調試信息
+        
+        if (prayerEmotion && prayerEmotion.includes('｜')) {
+            const parts = prayerEmotion.split('｜');
+            displayEmotion = parts[0];
+            displaySituation = parts[1];
+            console.log('解析後 - displayEmotion:', displayEmotion, 'displaySituation:', displaySituation);
+        }
+        
         html += `
             <div style="text-align: left; max-width: 600px; margin: 20px auto;">
-                <h3 style="color: #2c3e50;">${t('verseForEmotion', { emotion: prayerEmotion })}</h3>
+                <h3 style="color: #2c3e50;">${t('verseForEmotion', { emotion: displayEmotion })}</h3>
+                ${displaySituation ? `<p style="color: #7f8c8d; font-style: italic; margin-bottom: 15px;">${displayEmotion}: ${displaySituation}</p>` : ''}
                 <p style="font-size: 1.1em;">
                     <strong>${t('scripture')}</strong><br>
                     ${scripture.replace(/\n/g, '<br>')}
