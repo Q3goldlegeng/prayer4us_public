@@ -570,31 +570,81 @@ function drawConnectors(branchCoords, btnIds) {
 
 // 創建語言選擇器
 function createLanguageSelector() {
-    // 檢查是否已經存在語言選擇器
-    if (document.getElementById('languageSelector')) return;
-    
-    // 創建語言選擇容器
+    if (document.getElementById('mainContainer')) return;
+    // 外層容器
+    const mainContainer = document.createElement('div');
+    mainContainer.id = 'mainContainer';
+    mainContainer.style.position = 'absolute';
+    mainContainer.style.top = '10px';
+    mainContainer.style.right = '10px';
+    mainContainer.style.display = 'flex';
+    mainContainer.style.flexDirection = 'row';
+    mainContainer.style.alignItems = 'flex-start';
+    mainContainer.style.height = 'auto';
+    mainContainer.style.zIndex = '3000';
+
+    // 收合按鈕
+    const toggleBtn = document.createElement('button');
+    toggleBtn.id = 'toggleBtn';
+    toggleBtn.innerHTML = '&gt;';
+    toggleBtn.style.cssText = `
+        width: 16px;
+        height: 36px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+        cursor: pointer;
+        padding: 0;
+        line-height: 36px;
+        text-align: center;
+        z-index: 3100;
+        box-shadow: 0 2px 8px #0001;
+        margin-right: 8px;
+        margin-top: 8px;
+        align-self: flex-start;
+        transition: transform 0.4s cubic-bezier(.4,2,.6,1);
+    `;
+
+    // menuWrapper：語言選擇器和音樂控制上下排列
+    const menuWrapper = document.createElement('div');
+    menuWrapper.id = 'menuWrapper';
+    menuWrapper.style.display = 'flex';
+    menuWrapper.style.flexDirection = 'column';
+    menuWrapper.style.alignItems = 'stretch';
+    menuWrapper.style.justifyContent = 'flex-start';
+    menuWrapper.style.height = 'auto';
+    menuWrapper.style.transition = 'transform 0.4s cubic-bezier(.4,2,.6,1)';
+    menuWrapper.style.transform = 'translateX(0)';
+
+    // 語言下拉
     const langContainer = document.createElement('div');
     langContainer.id = 'languageContainer';
-    langContainer.style.position = 'absolute';
-    langContainer.style.top = '10px';
-    langContainer.style.right = '10px';
     langContainer.style.display = 'flex';
     langContainer.style.flexDirection = 'column';
     langContainer.style.gap = '10px';
-    
-    // 創建語言選擇標籤
+    langContainer.style.background = 'rgba(255, 255, 255, 0.95)';
+    langContainer.style.borderRadius = '10px';
+    langContainer.style.padding = '15px';
+    langContainer.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+    langContainer.style.minWidth = '200px';
+    langContainer.style.transition = 'box-shadow 0.3s';
+    langContainer.style.position = 'static';
+    langContainer.style.marginBottom = '12px';
+
+    // 語言標籤
     const langLabel = document.createElement('span');
     langLabel.textContent = t('languageSelector') + ': ';
     langLabel.style.marginRight = '5px';
-    
-    // 創建語言選擇下拉框
+
+    // 語言下拉
     const langSelector = document.createElement('select');
     langSelector.id = 'languageSelector';
     langSelector.style.padding = '5px';
     langSelector.style.borderRadius = '5px';
-    
-    // 添加語言選項
+
     const languages = [
         { code: 'zh-Hant', name: '繁體中文' },
         { code: 'zh-Hans', name: '简体中文' },
@@ -607,7 +657,6 @@ function createLanguageSelector() {
         { code: 'nl', name: 'Nederlands' },
         { code: 'es', name: 'Español' }
     ];
-    
     languages.forEach(lang => {
         const option = document.createElement('option');
         option.value = lang.code;
@@ -615,27 +664,45 @@ function createLanguageSelector() {
         option.selected = currentLanguage === lang.code;
         langSelector.appendChild(option);
     });
-    
-    // 添加語言切換事件
     langSelector.addEventListener('change', function() {
         const newLanguage = this.value;
         setCurrentLanguage(newLanguage);
         recordVisit(newLanguage);
         resetEmotionSelection();
     });
-    
-    // 組裝語言選擇器
     langContainer.appendChild(langLabel);
     langContainer.appendChild(langSelector);
-    
-    // 創建音樂控制面板並添加到語言選擇器下面
+
+    // 音樂控制面板
     const musicControls = createMusicControls();
     if (musicControls) {
-        langContainer.appendChild(musicControls);
+        musicControls.style.background = 'transparent';
+        musicControls.style.boxShadow = 'none';
+        musicControls.style.padding = '0';
+        musicControls.style.marginTop = '0';
+        menuWrapper.appendChild(langContainer);
+        menuWrapper.appendChild(musicControls);
+    } else {
+        menuWrapper.appendChild(langContainer);
     }
-    
-    // 添加到頁面
-    document.body.appendChild(langContainer);
+
+    let isCollapsed = false;
+    toggleBtn.onclick = function() {
+        isCollapsed = !isCollapsed;
+        if (isCollapsed) {
+            menuWrapper.style.transform = 'translateX(100%)';
+            toggleBtn.style.transform = 'translateX(250px)';
+            toggleBtn.innerHTML = '&lt;';
+        } else {
+            menuWrapper.style.transform = 'translateX(0)';
+            toggleBtn.style.transform = 'translateX(0)';
+            toggleBtn.innerHTML = '&gt;';
+        }
+    };
+
+    mainContainer.appendChild(toggleBtn);
+    mainContainer.appendChild(menuWrapper);
+    document.body.appendChild(mainContainer);
 }
 
 /*

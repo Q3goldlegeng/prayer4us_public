@@ -9,6 +9,8 @@ function EmotionTree({ emotions, onSelect, containerId = 'mainEmotions' }) {
   container.innerHTML = '';
   container.style.position = 'relative';
 
+  
+
   // 樹幹與分枝座標
   const width = 400, height = 380, centerX = 180, trunkY = 200;
   const branchCoords = [
