@@ -801,12 +801,9 @@ async function getVoiceAndInstructions(emotion, prayerText = '') {
             return { voice: 'alloy', instructions: '' };
         }
         
-        // 定義給AI的內容，根據是否有禱告文調整提示
         let content = '';
         if (prayerText) {
-            // 如果有禱告文，生成音色選擇和語音指令
-            content = `基於用戶情緒「${emotion}」及以下禱告文，請執行兩項任務：
-
+            content = `基於用戶情緒「${emotion}」及以下禱告文，請執行兩項任務：\n\n
 1. 從以下六個OpenAI TTS語音中選擇最適合的一個：
    - Alloy: 平衡的聲音，適合一般用途，提供清晰度和溫暖感
    - Echo: 更動態的聲音，可以為通知增添興奮感
@@ -832,7 +829,6 @@ Emotions: [情緒描述]
 Pronunciation: [發音重點描述]
 Pauses: [停頓描述]`;
         } else {
-            // 如果沒有禱告文，只選擇音色
             content = `基於用戶的情緒「${emotion}」，請從以下六個OpenAI TTS語音中選擇最適合的一個:
 Alloy: 平衡的聲音，適合一般用途，提供清晰度和溫暖感
 Echo: 更動態的聲音，可以為通知增添興奮感
@@ -845,40 +841,39 @@ Shimmer: 柔和且舒緩的聲音，適合平靜的環境
 VOICE: [選擇的語音名稱，小寫]`;
         }
         
-        // 改為呼叫 Groq API 代理端點
-        const response = await fetch('/api/groq', {
+        const response = await fetch('/api/gemini', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                content,       // 你要傳給後端的內容
-                prayerText     // 其他必要參數
-            })
+            body: JSON.stringify({ content, prayerText })
         });
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const groqData = await response.json();
-        if (!groqData?.choices?.[0]?.message?.content) {
+        
+        const data = await response.json();
+        
+        // 解析格式示例：後端預期回傳 { content: "VOICE: alloy\n...\nINSTRUCTIONS: ..." }
+        if (!data?.content || typeof data.content !== 'string') {
             throw new Error('Invalid API response structure');
         }
-        // 解析回應
-        const responseText = groqData.choices[0].message.content.trim();
-        
+
+        const responseText = data.content.trim();
+
         // 提取語音名稱
         const voiceMatch = responseText.match(/VOICE:\s*(\w+)/i);
-        let voice = 'alloy'; // 默認值
-        
+        let voice = 'alloy'; // 預設語音
+
         if (voiceMatch && voiceMatch[1]) {
             const extractedVoice = voiceMatch[1].toLowerCase().trim();
-            // 確保回傳的是有效的語音選項
             const validVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
             if (validVoices.includes(extractedVoice)) {
                 voice = extractedVoice;
             } else {
-                console.warn('API返回了無效的語音名稱:', extractedVoice);
+                console.warn('API 返回的語音名稱無效:', extractedVoice);
             }
         }
-        
+
         // 提取指令（如果有）
         let instructions = '';
         if (prayerText) {
@@ -887,13 +882,15 @@ VOICE: [選擇的語音名稱，小寫]`;
                 instructions = instructionsMatch[1].trim();
             }
         }
-        
+
         return { voice, instructions };
+
     } catch (error) {
         console.error('獲取語音建議及指令失敗:', error);
-        return { voice: 'alloy', instructions: '' }; // 出錯時使用默認語音
+        return { voice: 'alloy', instructions: '' }; // 出錯時回傳預設
     }
 }
+
 
 /**
  * 多段禱告詞管理
@@ -911,30 +908,24 @@ let countdownSeconds = 0;
  * @param {string} emotion - 用戶情緒
  * @param {boolean} isFirst - 是否為第一段
  */
+
 async function getEmotionalVerse(emotion, isFirst = false) {
-    // 前端不再檢查 apiKey
     if (isFirst) {
         prayerSegments = [];
     }
-    // 無論是否為第一次，都要更新 prayerEmotion
     prayerEmotion = emotion;
-    window.prayerEmotion = emotion; // 全域同步
-    // 計算第幾段
+    window.prayerEmotion = emotion;
     const segmentNumber = prayerSegments.length + 1;
-    // 設定禱告詞長度
-    let prayerLength = 100; // 預設100字以上
-    if (segmentNumber === 1) prayerLength = 120; // 約1分鐘
-    else if (segmentNumber === 2) prayerLength = 200; // 約1.5~2分鐘
-    else prayerLength = 250; // 2~2.5分鐘
+    let prayerLength = 100;
+    if (segmentNumber === 1) prayerLength = 120;
+    else if (segmentNumber === 2) prayerLength = 200;
+    else prayerLength = 250;
 
-    // 初始時先設置默認語音，稍後會根據禱告文內容再做選擇
     let voiceData = { voice: 'alloy', instructions: '' };
     try {
         const verseElement = document.getElementById('verse');
-        // loading區塊只顯示在最上方，舊禱告詞不消失
         renderPrayerLoading();
 
-        // 開始倒數計時
         countdownSeconds = 0;
         clearInterval(countdownInterval);
         countdownInterval = setInterval(() => {
@@ -945,21 +936,25 @@ async function getEmotionalVerse(emotion, isFirst = false) {
             }
         }, 1000);
 
-        // 產生禱告詞
-        // 改為呼叫 Groq API 代理端點
-        const response = await fetch('/api/groq', {
+        const response = await fetch('/api/gemini', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 emotion,
                 currentLanguage,
-                prayerLength
-            })
+                prayerLength,
+            }),
         });
+
         const data = await response.json();
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        if (!data.choices || !Array.isArray(data.choices) || !data.choices[0]?.message?.content) {
-            // 若有 error 屬性，顯示原始錯誤
+
+        // 這裡改成用後端回傳的多欄位格式物件
+        if (
+            typeof data.prayer !== 'string' ||
+            typeof data.scripture !== 'string' ||
+            typeof data.explanation !== 'string'
+        ) {
             let errorMsg = '';
             if (data.error) {
                 errorMsg = data.error + (data.detail ? `: ${data.detail}` : '');
@@ -968,88 +963,49 @@ async function getEmotionalVerse(emotion, isFirst = false) {
             }
             throw new Error('Invalid API response structure\n' + errorMsg);
         }
-        const responseText = data.choices[0].message.content.trim();
 
-        // 嘗試多種格式解析
-        let scripture = '', explanation = '', prayerText = '';
-        // 1. 標準格式
-        const scriptureKey = t('scripture').replace('：', '');
-        const explanationKey = t('explanation').replace('：', '');
-        const prayerKey = t('prayer').replace('：', '');
-        let verseMatch = responseText.match(new RegExp(`【${scriptureKey}】([\s\S]+?)\n【${explanationKey}】`));
-        let comfortMatch = responseText.match(new RegExp(`【${explanationKey}】([\s\S]+?)\n【${prayerKey}】`));
-        let prayerMatch = responseText.match(new RegExp(`【${prayerKey}】([\s\S]+)`));
+        const prayerText = data.prayer.trim();
+        const scripture = data.scripture.trim();
+        const explanation = data.explanation.trim();
 
-        if (verseMatch && comfortMatch && prayerMatch) {
-            scripture = verseMatch[1].trim();
-            explanation = comfortMatch[1].trim();
-            prayerText = prayerMatch[1].trim();
-        } else {
-            // 2. 嘗試解析 markdown/星號格式
-            // 例如 prayer, verse, explanation 以 **title** 或 **標題** 開頭
-            const prayerMd = responseText.match(/\*\*禱告\*\*[\s\S]+?\n([\s\S]+?)\n\*\*聖經經文\*\*/);
-            const verseMd = responseText.match(/\*\*聖經經文\*\*[\s\S]+?\n([\s\S]+?)\n\*\*簡短解說\*\*/);
-            const explanationMd = responseText.match(/\*\*簡短解說\*\*[\s\S]+?\n([\s\S]+?)(\n|$)/);
-            if (prayerMd && verseMd && explanationMd) {
-                prayerText = prayerMd[1].trim();
-                scripture = verseMd[1].trim();
-                explanation = explanationMd[1].trim();
-            } else {
-                // 3. fallback: 只要有 prayer/verse/explanation 關鍵字就分段
-                const prayerIdx = responseText.indexOf('禱告');
-                const verseIdx = responseText.indexOf('聖經經文');
-                const explanationIdx = responseText.indexOf('簡短解說');
-                if (prayerIdx !== -1 && verseIdx !== -1 && explanationIdx !== -1) {
-                    prayerText = responseText.substring(prayerIdx + 2, verseIdx).trim();
-                    scripture = responseText.substring(verseIdx + 4, explanationIdx).trim();
-                    explanation = responseText.substring(explanationIdx + 4).trim();
-                }
-            }
-        }
+        // 你原本的正則系統解析多標籤純文字可省略，
+        // 因為後端直接已分好三段文字，可直接使用
 
         if (prayerText && scripture && explanation) {
-            // 取得語音建議
             try {
                 voiceData = await getVoiceAndInstructions(emotion, prayerText);
             } catch (error) {
                 console.error('選擇語音時出錯，使用默認語音:', error);
             }
-            // prepend 新段落
+
             prayerSegments.unshift({
                 text: prayerText,
                 voice: voiceData.voice,
                 instructions: voiceData.instructions,
-                number: segmentNumber
+                number: segmentNumber,
             });
-            // 清除倒數計時器
+
             clearInterval(countdownInterval);
-            // 移除 loading 區塊並渲染所有段落
             renderPrayerSegments(scripture, explanation);
         } else {
             clearInterval(countdownInterval);
-            // 移除 loading 區塊並渲染所有段落
             renderPrayerSegments();
-            const verseElement = document.getElementById('verse');
             verseElement.classList.remove('loading-verse');
-            let errorMsg = '';
-            if (data.error) {
-                errorMsg = data.error + (data.detail ? `: ${data.detail}` : '');
-            } else {
-                errorMsg = JSON.stringify(data);
-            }
-            verseElement.innerHTML = `${t('parseError')}<br>${errorMsg}<br><pre style="white-space:pre-wrap;text-align:left;max-width:600px;margin:10px auto;background:#f8f8f8;padding:8px;border-radius:6px;">${responseText}</pre>`;
+            verseElement.innerHTML = `${t('parseError')}<br>資料不完整，請稍後再試`;
         }
     } catch (error) {
         console.error('錯誤：', error);
         clearInterval(countdownInterval);
-        // 移除 loading 區塊並渲染所有段落
         renderPrayerSegments();
         const verseElement = document.getElementById('verse');
         verseElement.classList.remove('loading-verse');
-        verseElement.innerHTML = t('errorGettingVerse') + '<br>' + (error && error.message ? error.message : '');
+        verseElement.innerHTML =
+            t('errorGettingVerse') + '<br>' + (error && error.message ? error.message : '');
     }
-    }
+}
 
+
+    
 
 /**
  * 渲染所有禱告段落

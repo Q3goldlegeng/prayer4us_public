@@ -1,231 +1,195 @@
-
-
+require('dotenv').config();
 const express = require('express');
-const app = express();
-
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const path = require('path');
+const app = express();
 
 app.use(express.json());
 
-// --- /api/prayer: Generate prayer or scripture text using Groq or OpenAI ---
-app.post('/api/prayer', async (req, res) => {
-  const { content, emotion, currentLanguage, prayerLength, topic } = req.body;
-  // 首頁情緒 prompt 直接回傳預設陣列
-  const emotionPrompts = [
-    '首次訪問，請推薦5個常見的情緒狀態',
-    '首次访问，请推荐5个常见的情绪状态',
-    'First visit, please recommend 5 common emotional states',
-    '初回訪問、一般的な感情状態を5つ推薦してください',
-    '첫 방문, 일반적인 감정 상태 5가지를 추천해 주세요',
-    'Erster Besuch, bitte empfehlen Sie 5 häufige emotionale Zustände',
-    'Première visite, veuillez recommander 5 états émotionnels courants',
-    'Prima visita, si prega di consigliare 5 stati emotivi comuni',
-    'Eerste bezoek, adviseer alstublieft 5 veelvoorkomende emotionele toestanden',
-    'Primera visita, por favor recomiende 5 estados emocionales comunes'
-  ];
-  if (topic && emotionPrompts.includes(topic)) {
-    // 根據語言回傳對應情緒
-    const emotionsByLang = {
-      'zh-Hant': ['焦慮', '悲傷', '孤獨', '壓力', '喜樂', '我有其他狀況'],
-      'zh-Hans': ['焦虑', '悲伤', '孤独', '压力', '喜乐', '我有其他状况'],
-      'en': ['Anxiety', 'Sadness', 'Loneliness', 'Stress', 'Joy', 'I have another situation'],
-      'ja': ['不安', '悲しみ', '孤独', 'ストレス', '喜び', '他の状況があります'],
-      'ko': ['불안', '슬픔', '외로움', '스트레스', '기쁨', '다른 상황이 있어요'],
-      'de': ['Angst', 'Traurigkeit', 'Einsamkeit', 'Stress', 'Freude', 'Ich habe eine andere Situation'],
-      'fr': ['Anxiété', 'Tristesse', 'Solitude', 'Stress', 'Joie', "J'ai une autre situation"],
-      'it': ['Ansia', 'Tristezza', 'Solitudine', 'Stress', 'Gioia', "Ho un'altra situazione"],
-      'nl': ['Angst', 'Verdriet', 'Eenzaamheid', 'Stress', 'Vreugde', 'Ik heb een andere situatie'],
-      'es': ['Ansiedad', 'Tristeza', 'Soledad', 'Estrés', 'Alegría', 'Tengo otra situación']
-    };
-    const lang = currentLanguage || 'zh-Hant';
-    return res.json({ result: emotionsByLang[lang] || emotionsByLang['zh-Hant'] });
+// -------- Gemini API 產生禱告或經文 --------
+app.post('/api/gemini', async (req, res) => {
+  const { content, emotion, currentLanguage = 'zh-Hant', prayerLength, topic } = req.body;
+  const googleApiKey = process.env.GOOGLE_API_KEY;
+
+  if (!googleApiKey) {
+    return res.status(500).json({ error: 'Google API key not set in environment.' });
   }
 
-  // Prefer Groq, fallback to OpenAI if not set
-  const groqKey = process.env.GROQ_API_KEY;
-  const openaiKey = process.env.OPENAI_API_KEY;
-  let apiKey, apiUrl, model, systemPrompt;
+  // 判斷是否為英文（簡單判斷用 currentLanguage）
+  const isEnglish = currentLanguage.toLowerCase().startsWith('en');
 
-  if (groqKey) {
-    apiKey = groqKey;
-    apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
-    model = 'llama3-70b-8192';
-    systemPrompt = '你是一位溫柔誠懇的基督徒禱告助手。';
-  } else if (openaiKey) {
-    apiKey = openaiKey;
-    apiUrl = 'https://api.openai.com/v1/chat/completions';
-    model = 'gpt-3.5-turbo';
-    systemPrompt = 'You are a gentle and sincere Christian prayer assistant.';
-  } else {
-    return res.status(500).json({ error: 'No API key set in environment.' });
-  }
-
-  // Compose prompt
+  // 根據用戶輸入組合 prompt
   let userPrompt = '';
   if (content) {
     userPrompt = content;
   } else if (emotion) {
-    userPrompt = `請針對「${emotion}」情緒，寫一段禱告文，長度約${prayerLength || 100}字，並附上合適的聖經經文與簡短解說。語言：${currentLanguage || 'zh-Hant'}`;
+    if (isEnglish) {
+      userPrompt = `Please write a prayer of about ${prayerLength || 100} words for the emotion "${emotion}", including a related Bible verse and a brief explanation in English.`;
+    } else {
+      userPrompt = `請針對「${emotion}」的情緒，寫一段約${prayerLength || 100}字的禱告文，並附上合適的聖經經文與簡短解說。請使用繁體中文。`;
+    }
   } else if (topic) {
-    userPrompt = `請用繁體中文寫一段 100 字內的禱告文，主題是：「${topic}」。最後請加上一句對應的聖經經文出處。`;
+    if (isEnglish) {
+      userPrompt = `Please write a prayer of about 100 words on the topic: "${topic}". Include a related Bible verse at the end. Use English.`;
+    } else {
+      userPrompt = `請用繁體中文寫一段約100字的禱告文，主題是「${topic}」。請附上相關的聖經經文與簡短解說。`;
+    }
   } else {
     return res.status(400).json({ error: 'Missing content, emotion, or topic.' });
   }
+
+  // 透過 prompt 明確要求標籤分段輸出
+  const promptWithTags = isEnglish
+    ? `Please respond in three parts with the exact tags shown below, all in English:
+
+<prayer>Prayer text here</prayer>
+<scripture>Bible verse here</scripture>
+<explanation>Brief explanation here</explanation>
+
+Based on the following instructions: ${userPrompt}`
+    : `請用繁體中文回覆，並用以下標籤分三段：
+<prayer>禱告文內容</prayer>
+<scripture>聖經經文</scripture>
+<explanation>簡短解說</explanation>
+
+根據以下的指示作答：${userPrompt}`;
+
+  const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=${googleApiKey}`;
+
+  const payload = {
+    contents: [{ parts: [{ text: promptWithTags }] }],
+  };
 
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 1200
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      return res.status(500).json({ error: 'API error', detail: errText });
+      console.error('Gemini API error detail:', errText);
+      return res.status(500).json({ error: 'Gemini API error', detail: errText });
     }
-    const data = await response.json();
-    res.json(data); // 回傳完整 Groq/OpenAI API 格式，前端可正確解析 choices[0].message.content
+
+    const result = await response.json();
+    if (result.candidates && result.candidates.length > 0) {
+      const fullText = result.candidates[0]?.content?.parts?.[0]?.text || '';
+
+      // 解析三段文字，利用正規表達式抓標籤內容
+      const prayerMatch = fullText.match(/<prayer>([\s\S]*?)<\/prayer>/i);
+      const scriptureMatch = fullText.match(/<scripture>([\s\S]*?)<\/scripture>/i);
+      const explanationMatch = fullText.match(/<explanation>([\s\S]*?)<\/explanation>/i);
+
+      const prayer = prayerMatch ? prayerMatch[1].trim() : '';
+      const scripture = scriptureMatch ? scriptureMatch[1].trim() : '';
+      const explanation = explanationMatch ? explanationMatch[1].trim() : '';
+
+      return res.json({ prayer, scripture, explanation });
+    } else {
+      return res.status(500).json({ error: 'No content generated', detail: result });
+    }
   } catch (err) {
-    res.status(500).json({ error: 'API call failed', detail: err.message });
+    console.error('Gemini API call failed:', err);
+    return res.status(500).json({ error: 'Gemini API call failed', detail: err.message });
   }
 });
 
-// --- /api/groq: 代理 Groq chat/completions ---
-app.post('/api/groq', async (req, res) => {
-  const { content, emotion, currentLanguage, prayerLength, topic } = req.body;
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'Groq API key not set in environment.' });
-  }
 
-  // 組合 prompt
-  let userPrompt = '';
-  if (content) {
-    userPrompt = content;
-  } else if (emotion) {
-    userPrompt = `請針對「${emotion}」情緒，寫一段禱告文，長度約${prayerLength || 100}字，並附上合適的聖經經文與簡短解說。語言：${currentLanguage || 'zh-Hant'}`;
-  } else if (topic) {
-    userPrompt = `請用繁體中文寫一段 100 字內的禱告文，主題是：「${topic}」。最後請加上一句對應的聖經經文出處。`;
-  } else {
-    return res.status(400).json({ error: 'Missing content, emotion, or topic.' });
-  }
 
-  try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'llama3-70b-8192',
-        messages: [
-          { role: 'system', content: '你是一位溫柔誠懇的基督徒禱告助手。' },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 1200
-      })
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      return res.status(500).json({ error: 'Groq API error', detail: errText });
-    }
-    const data = await response.json();
-    // 回傳完整 Groq/OpenAI API 格式，前端可正確解析
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: 'API call failed', detail: err.message });
-  }
-});
 
 
 // --- /api/google-tts: Google Cloud Text-to-Speech ---
-const { GoogleAuth } = require('google-auth-library');
 const GOOGLE_TTS_API_KEY = process.env.GOOGLE_TTS_API_KEY;
 
 app.post('/api/google-tts', async (req, res) => {
   const { text, languageCode = 'zh-TW', voiceName, speakingRate = 1.0 } = req.body;
+
   if (!GOOGLE_TTS_API_KEY) {
     return res.status(500).json({ error: 'Google TTS API key not set in environment.' });
   }
+
   if (!text || typeof text !== 'string' || !text.trim()) {
     return res.status(400).json({ error: 'Missing or invalid text.' });
   }
+
   try {
     const apiUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_TTS_API_KEY}`;
     const ttsBody = {
       input: { text },
       voice: {
         languageCode,
-        name: voiceName || undefined // 可選: 指定 voiceName
+        name: voiceName || undefined, // optional
       },
       audioConfig: {
         audioEncoding: 'MP3',
-        speakingRate
-      }
+        speakingRate,
+      },
     };
+
     const ttsRes = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(ttsBody)
+      body: JSON.stringify(ttsBody),
     });
+
     if (!ttsRes.ok) {
       const errText = await ttsRes.text();
       return res.status(500).json({ error: 'Google TTS API error', detail: errText });
     }
+
     const ttsData = await ttsRes.json();
+
     if (!ttsData.audioContent) {
       return res.status(500).json({ error: 'No audioContent in TTS response.' });
     }
+
     // 回傳 base64 音訊
-    res.json({ audioContent: ttsData.audioContent });
+    return res.json({ audioContent: ttsData.audioContent });
+
   } catch (err) {
-    res.status(500).json({ error: 'Google TTS call failed', detail: err.message });
+    return res.status(500).json({ error: 'Google TTS call failed', detail: err.message });
   }
 });
 
-
-// --- /api/counter: 最簡單的記憶體計數器 ---
+// --- /api/counter: 計數器 (內存) ---
 let counter = 0;
+
 app.get('/api/counter', (req, res) => {
   res.json({ count: counter });
 });
+
 app.post('/api/counter', (req, res) => {
   counter++;
   res.json({ count: counter });
 });
 
-// --- /api/env: 回傳環境變數（僅回傳安全資訊，勿回傳金鑰） ---
+// --- /api/env: 回傳安全環境資訊 ---
 app.get('/api/env', (req, res) => {
   res.json({ NODE_ENV: process.env.NODE_ENV || 'production' });
 });
 
-
-// 靜態檔案服務，支援 favicon.ico、js、css 等靜態資源
+// 靜態檔案設定
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/js', express.static(path.join(__dirname, '..', 'js')));
 app.use('/css', express.static(path.join(__dirname, '..', 'css')));
-app.use(express.static(__dirname)); // 兼容 favicon.ico 在根目錄
+app.use(express.static(__dirname)); // 支援根目錄 favicon.ico
 
-// fallback 路由必須在所有 API 路由和靜態檔案服務之後
+// fallback 路由，啟用 SPA 支援
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// 靜態檔案與 SPA fallback
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/js', express.static(path.join(__dirname, '..', 'js')));
+app.use('/css', express.static(path.join(__dirname, '..', 'css')));
+app.use(express.static(__dirname));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// 啟動服務
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
