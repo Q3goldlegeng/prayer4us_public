@@ -1,15 +1,17 @@
 document.addEventListener('DOMContentLoaded', function() {
     // 延遲初始化，確保頁面完全載入
-    setTimeout(initBackgroundMusic, 1000);
     
-    updateAllLabelsForLanguage(currentLanguage);
-    setTimeout(updateMusicTypeOptions (currentLanguage), 1000);
+    
+    
+    
     
     
     const musicControls = createMusicControls();
   if (musicControls) {
     document.body.appendChild(musicControls);
   }
+  updateAllLabelsForLanguage(currentLanguage);
+  setTimeout(initBackgroundMusic, 1000);
 });
 // 背景音樂相關變數
 let backgroundMusic = null;
