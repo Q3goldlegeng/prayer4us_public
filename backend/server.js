@@ -1,43 +1,46 @@
 require('dotenv').config();
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const express = require('express');
 const path = require('path');
 const app = express();
 
+
 app.use(express.json());
 
 // -------- Gemini API 產生禱告或經文 --------
-app.post('/api/gemini', async (req, res) => {
-  const { content, emotion, currentLanguage = 'zh-Hant', prayerLength, topic } = req.body;
-  const googleApiKey = process.env.GOOGLE_API_KEY;
 
-  if (!googleApiKey) {
-    return res.status(500).json({ error: 'Google API key not set in environment.' });
+console.log('OpenAI Key:', OPENAI_API_KEY);
+
+app.post('/api/gemini', async (req, res) => {
+
+  
+
+  const { content, emotion, currentLanguage = 'zh-Hant', prayerLength = 100, topic } = req.body;
+
+  if (!OPENAI_API_KEY) {
+    return res.status(500).json({ error: 'OpenAI API key not set in environment.' });
   }
 
-  // 判斷是否為英文（簡單判斷用 currentLanguage）
+  // 判斷是否為英文
   const isEnglish = currentLanguage.toLowerCase().startsWith('en');
 
-  // 根據用戶輸入組合 prompt
+  // 組 prompt
   let userPrompt = '';
   if (content) {
     userPrompt = content;
   } else if (emotion) {
-    if (isEnglish) {
-      userPrompt = `Please write a prayer of about ${prayerLength || 100} words for the emotion "${emotion}", including a related Bible verse and a brief explanation in English.`;
-    } else {
-      userPrompt = `請針對「${emotion}」的情緒，寫一段約${prayerLength || 100}字的禱告文，並附上合適的聖經經文與簡短解說。請使用繁體中文。`;
-    }
+    userPrompt = isEnglish
+      ? `Please write a prayer of about ${prayerLength} words for the emotion "${emotion}", including a related Bible verse and a brief explanation in English.`
+      : `請針對「${emotion}」的情緒，寫一段約${prayerLength}字的禱告文，並附上合適的聖經經文與簡短解說。請使用繁體中文。`;
   } else if (topic) {
-    if (isEnglish) {
-      userPrompt = `Please write a prayer of about 100 words on the topic: "${topic}". Include a related Bible verse at the end. Use English.`;
-    } else {
-      userPrompt = `請用繁體中文寫一段約100字的禱告文，主題是「${topic}」。請附上相關的聖經經文與簡短解說。`;
-    }
+    userPrompt = isEnglish
+      ? `Please write a prayer of about ${prayerLength} words on the topic: "${topic}". Include a related Bible verse at the end. Use English.`
+      : `請用繁體中文寫一段約${prayerLength}字的禱告文，主題是「${topic}」。請附上相關的聖經經文與簡短解說。`;
   } else {
     return res.status(400).json({ error: 'Missing content, emotion, or topic.' });
   }
 
-  // 透過 prompt 明確要求標籤分段輸出
+  // 明確要求標籤分段輸出
   const promptWithTags = isEnglish
     ? `Please respond in three parts with the exact tags shown below, all in English:
 
@@ -52,50 +55,100 @@ Based on the following instructions: ${userPrompt}`
 <explanation>簡短解說</explanation>
 
 根據以下的指示作答：${userPrompt}`;
-
-  const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=${googleApiKey}`;
-
-  const payload = {
-    contents: [{ parts: [{ text: promptWithTags }] }],
-  };
-
+  
   try {
-    const response = await fetch(apiUrl, {
+    // 呼叫 OpenAI Chat Completion API
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', // 或你有的其他模型名稱
+        messages: [
+          { role: 'system', content: 'You are a helpful assistant that responds with the given structured tags.' },
+          { role: 'user', content: promptWithTags }
+        ],
+        max_tokens: 800,
+        temperature: 0.7,
+        n: 1,
+        stop: null
+      })
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('Gemini API error detail:', errText);
-      return res.status(500).json({ error: 'Gemini API error', detail: errText });
+      console.error('OpenAI API error detail:', errText);
+      return res.status(response.status).json({ error: 'OpenAI API error', detail: errText });
     }
 
-    const result = await response.json();
-    if (result.candidates && result.candidates.length > 0) {
-      const fullText = result.candidates[0]?.content?.parts?.[0]?.text || '';
+    const data = await response.json();
+    const fullText = data.choices?.[0]?.message?.content || '';
+    console.log('[Debug] OpenAI 回傳內容全文：', fullText);
+    
+    // 用正則提取三段標籤中的內容
+    const prayerMatch = fullText.match(/<prayer>([\s\S]*?)<\/prayer>/i);
+    const scriptureMatch = fullText.match(/<scripture>([\s\S]*?)<\/scripture>/i);
+    const explanationMatch = fullText.match(/<explanation>([\s\S]*?)<\/explanation>/i);
 
-      // 解析三段文字，利用正規表達式抓標籤內容
-      const prayerMatch = fullText.match(/<prayer>([\s\S]*?)<\/prayer>/i);
-      const scriptureMatch = fullText.match(/<scripture>([\s\S]*?)<\/scripture>/i);
-      const explanationMatch = fullText.match(/<explanation>([\s\S]*?)<\/explanation>/i);
+    const prayer = prayerMatch ? prayerMatch[1].trim() : '';
+    const scripture = scriptureMatch ? scriptureMatch[1].trim() : '';
+    const explanation = explanationMatch ? explanationMatch[1].trim() : '';
 
-      const prayer = prayerMatch ? prayerMatch[1].trim() : '';
-      const scripture = scriptureMatch ? scriptureMatch[1].trim() : '';
-      const explanation = explanationMatch ? explanationMatch[1].trim() : '';
+    return res.json({ prayer, scripture, explanation });
 
-      return res.json({ prayer, scripture, explanation });
-    } else {
-      return res.status(500).json({ error: 'No content generated', detail: result });
-    }
   } catch (err) {
-    console.error('Gemini API call failed:', err);
-    return res.status(500).json({ error: 'Gemini API call failed', detail: err.message });
+    console.error('OpenAI API call failed:', err);
+    return res.status(500).json({ error: 'OpenAI API call failed', detail: err.message });
   }
 });
 
 
+
+// --- /api/openai-tts: OpenAI Text-to-Speech ---
+
+
+app.post('/api/openai-tts', async (req, res) => {
+  const { text, voice = 'alloy', model = 'tts-1', speed = 1.0 } = req.body;
+
+  if (!OPENAI_API_KEY) {
+    return res.status(500).json({ error: 'OpenAI API key not set in environment.' });
+  }
+
+  if (!text || typeof text !== 'string' || !text.trim()) {
+    return res.status(400).json({ error: 'Missing or invalid text.' });
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model,      // tts-1 或 tts-1-hd
+        input: text,
+        voice,      // alloy, echo, fable, onyx, nova, shimmer
+        speed       // 0.25 ~ 4.0
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(500).json({ error: 'OpenAI TTS API error', detail: errText });
+    }
+
+    // OpenAI 回傳二進位音訊，轉為 base64
+    const arrayBuffer = await response.arrayBuffer();
+    const base64audio = Buffer.from(arrayBuffer).toString('base64');
+    
+    return res.json({ audioContent: base64audio });
+  } catch (err) {
+    return res.status(500).json({ error: 'OpenAI TTS call failed', detail: err.message });
+  }
+});
 
 
 

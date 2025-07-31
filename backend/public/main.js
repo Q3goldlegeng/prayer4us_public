@@ -1,11 +1,129 @@
-// 讓主要互動函數可被全域呼叫（for inline onclick）
-// 先宣告 function，最後再掛到 window，避免 ReferenceError
-
+document.addEventListener('DOMContentLoaded', function() {
+    // 延遲初始化，確保頁面完全載入
+    setTimeout(initBackgroundMusic, 1000);
+    
+    updateAllLabelsForLanguage(currentLanguage);
+    setTimeout(updateMusicTypeOptions (currentLanguage), 1000);
+    
+    
+    const musicControls = createMusicControls();
+  if (musicControls) {
+    document.body.appendChild(musicControls);
+  }
+});
 // 背景音樂相關變數
 let backgroundMusic = null;
 let isMusicPlaying = false;
 let musicVolume = 0.3; // 預設音量 30%
 let currentMusicType = 'piano'; // 預設音樂類型
+let currentLanguage = 'zh-Hant'; // 預設語言
+
+const localizedTexts = {
+  musicTitle: {
+    'zh-Hant': '🎵 背景音樂',
+    'zh-Hans': '🎵 背景音乐',
+    'en': '🎵 Background Music',
+    'ja': '🎵 背景音楽',
+    'ko': '🎵 배경 음악',  
+    'de': '🎵 Hintergrundmusik',
+    'fr': '🎵 Musique de fond',
+    'it': '🎵 Musica di sottofondo',
+    'nl': '🎵 Achtergrondmuziek',
+    'es': '🎵 Música de fondo'
+  },
+  musicTypeLabel: {
+    'zh-Hant': '音樂類型:',
+    'zh-Hans': '音乐类型:',
+    'en': 'Music Type:',
+    'ja': '音楽の種類:',
+    'ko': '음악 종류:',
+    'de': 'Musiktyp:',
+    'fr': 'Type de musique:',
+    'it': 'Tipo di musica:',
+    'nl': 'Muziektype:',
+    'es': 'Tipo de música:'
+  },
+  volumeLabel: {
+    'zh-Hant': '🔊 音量:',
+    'zh-Hans': '🔊 音量:',
+    'en': '🔊 Volume:',
+    'ja': '🔊 音量:',
+    'ko': '🔊 볼륨:',  
+    'de': '🔊 Lautstärke:',
+    'fr': '🔊 Volume:',
+    'it': '🔊 Volume:',
+    'nl': '🔊 Volume:',
+    'es': '🔊 Volumen:'
+  },
+  play: {
+    'zh-Hant': '▶️ 播放',
+    'zh-Hans': '▶️ 播放',
+    'en': '▶️ Play',
+    'ja': '▶️ 再生',
+    'ko': '▶️ 재생',
+    'de': '▶️ Abspielen',
+    'fr': '▶️ Lecture',
+    'it': '▶️ Riproduci',
+    'nl': '▶️ Afspelen',
+    'es': '▶️ Reproducir'
+  },
+  pause: {
+    'zh-Hant': '⏸️ 暫停',
+    'zh-Hans': '⏸️ 暂停',
+    'en': '⏸️ Pause',
+    'ja': '⏸️ 一時停止',
+    'ko': '⏸️ 일시중지',
+    'de': '⏸️ Pause',
+    'fr': '⏸️ Pause',
+    'it': '⏸️ Pausa',
+    'nl': '⏸️ Pauze',
+    'es': '⏸️ Pausa'
+  },
+  // 其他多語字串...
+};
+function getText(key) {
+  return localizedTexts[key][currentLanguage] || localizedTexts[key]['zh-Hant'];
+}
+
+
+const musicTypeNames = {
+  piano: {
+    'zh-Hant': '🎹 鋼琴音樂',
+    'zh-Hans': '🎹 钢琴音乐',
+    'en': '🎹 Piano Music',
+    'ja': '🎹 ピアノ音楽',
+    'ko': '🎹 피아노 음악',
+    'de': '🎹 Klaviermusik',
+    'fr': '🎹 Musique de piano',
+    'it': '🎹 Musica di pianoforte',
+    'nl': '🎹 Pianomuziek',
+    'es': '🎹 Música de piano'
+  },
+  water: {
+    'zh-Hant': '💧 水聲',
+    'zh-Hans': '💧 水声',
+    'en': '💧 Water Sounds',
+    'ja': '💧 水音',
+    'ko': '💧 물소리',
+    'de': '💧 Wassergeräusche',
+    'fr': '💧 Bruits d\'eau',
+    'it': '💧 Suoni d’acqua',
+    'nl': '💧 Watergeluiden',
+    'es': '💧 Sonidos de agua'
+  },
+  forest: {
+    'zh-Hant': '🌲 森林',
+    'zh-Hans': '🌲 森林',
+    'en': '🌲 Forest',
+    'ja': '🌲 森林',
+    'ko': '🌲 숲',
+    'de': '🌲 Wald',
+    'fr': '🌲 Forêt',
+    'it': '🌲 Foresta',
+    'nl': '🌲 Bos',
+    'es': '🌲 Bosque'
+  }
+};
 
 // 音樂檔案列表
 const musicFiles = {
@@ -14,12 +132,7 @@ const musicFiles = {
     forest: 'assets/nature1.mp3'
 };
 
-// 音樂類型顯示名稱
-const musicTypeNames = {
-    piano: '🎹 鋼琴音樂',
-    water: '💧 水聲',
-    forest: '🌲 森林'
-};
+
 
 // 背景音樂控制函數
 function initBackgroundMusic() {
@@ -78,7 +191,8 @@ function createMusicControls() {
 
     // 音樂標題
     const musicTitle = document.createElement('div');
-    musicTitle.textContent = '🎵 背景音樂';
+    musicTitle.id = 'musicTitle';
+    musicTitle.textContent = getText('musicTitle');
     musicTitle.style.cssText = `
         font-weight: bold;
         text-align: center;
@@ -90,7 +204,7 @@ function createMusicControls() {
     // 播放/暫停按鈕
     const playPauseBtn = document.createElement('button');
     playPauseBtn.id = 'playPauseBtn';
-    playPauseBtn.innerHTML = isMusicPlaying ? '⏸️ 暫停' : '▶️ 播放';
+    playPauseBtn.innerHTML = getText('play');
     playPauseBtn.style.cssText = `
         padding: 8px 12px;
         border: none;
@@ -105,101 +219,94 @@ function createMusicControls() {
         toggleMusic();
     };
 
-    // 音樂類型選擇器
-    const musicTypeContainer = document.createElement('div');
-    musicTypeContainer.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    `;
+const musicTypeContainer = document.createElement('div');
+  musicTypeContainer.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+  `;
 
-    const musicTypeLabel = document.createElement('label');
-    musicTypeLabel.textContent = '音樂類型:';
-    musicTypeLabel.style.cssText = `
-        font-weight: bold;
-        color: #333;
-        font-size: 14px;
-    `;
+  const musicTypeLabel = document.createElement('label');
+musicTypeLabel.id = 'musicTypeLabel';
+musicTypeLabel.textContent = getText('musicTypeLabel');
+  musicTypeLabel.style.cssText = `
+      font-weight: bold;
+      color: #333;
+      font-size: 14px;
+  `;
 
-    const musicTypeSelect = document.createElement('select');
-    musicTypeSelect.id = 'musicTypeSelect';
-    musicTypeSelect.style.cssText = `
-        padding: 5px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        font-size: 14px;
-    `;
+  const musicTypeSelect = document.createElement('select');
+  musicTypeSelect.id = 'musicTypeSelect';
+  musicTypeSelect.style.cssText = `
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+  `;
+  
 
-    // 添加音樂選項
-    Object.keys(musicTypeNames).forEach(type => {
-        const option = document.createElement('option');
-        option.value = type;
-        option.textContent = musicTypeNames[type];
-        if (type === currentMusicType) {
-            option.selected = true;
-        }
-        musicTypeSelect.appendChild(option);
-    });
+  musicTypeContainer.appendChild(musicTypeLabel);
+  musicTypeContainer.appendChild(musicTypeSelect);
 
-    musicTypeSelect.onchange = function() {
-        changeMusicType(this.value);
-    };
+  updateMusicTypeOptions(currentLanguage);
 
-    musicTypeContainer.appendChild(musicTypeLabel);
-    musicTypeContainer.appendChild(musicTypeSelect);
+  musicTypeSelect.onchange = () => {
+    changeMusicType(musicTypeSelect.value);
+  };
 
-    // 音量控制
-    const volumeContainer = document.createElement('div');
-    volumeContainer.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    `;
+  const volumeContainer = document.createElement('div');
+  volumeContainer.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+  `;
 
     const volumeLabel = document.createElement('label');
-    volumeLabel.textContent = '🔊 音量:';
+    volumeLabel.id = 'volumeLabel';
+    volumeLabel.textContent = getText('volumeLabel');
     volumeLabel.style.cssText = `
-        font-weight: bold;
-        color: #333;
-        font-size: 14px;
-    `;
+      font-weight: bold;
+      color: #333;
+      font-size: 14px;
+  `;
 
-    const volumeSlider = document.createElement('input');
-    volumeSlider.type = 'range';
-    volumeSlider.min = '0';
-    volumeSlider.max = '100';
-    volumeSlider.value = musicVolume * 100;
-    volumeSlider.style.cssText = `
-        width: 100%;
-        height: 4px;
-        border-radius: 2px;
-        background: #ddd;
-        outline: none;
-    `;
-    volumeSlider.oninput = function() {
-        musicVolume = this.value / 100;
-        if (backgroundMusic) {
-            backgroundMusic.volume = musicVolume;
-        }
-    };
+  const volumeSlider = document.createElement('input');
+  volumeSlider.type = 'range';
+  volumeSlider.min = '0';
+  volumeSlider.max = '100';
+  volumeSlider.value = musicVolume * 100;
+  volumeSlider.style.cssText = `
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: #ddd;
+      outline: none;
+  `;
 
-    // 音量條同步
-    setInterval(() => {
-        if (backgroundMusic && volumeSlider.value != Math.round(backgroundMusic.volume * 100)) {
-            volumeSlider.value = Math.round(backgroundMusic.volume * 100);
-        }
-    }, 1000);
+  volumeSlider.oninput = () => {
+    musicVolume = volumeSlider.value / 100;
+    if (backgroundMusic) backgroundMusic.volume = musicVolume;
+  };
 
-    volumeContainer.appendChild(volumeLabel);
-    volumeContainer.appendChild(volumeSlider);
+  // 音量條同步機制
+  setInterval(() => {
+    if (backgroundMusic && volumeSlider.value != Math.round(backgroundMusic.volume * 100)) {
+      volumeSlider.value = Math.round(backgroundMusic.volume * 100);
+    }
+  }, 1000);
 
-    // 組裝音樂控制
-    musicContainer.appendChild(musicTitle);
-    musicContainer.appendChild(playPauseBtn);
-    musicContainer.appendChild(musicTypeContainer);
-    musicContainer.appendChild(volumeContainer);
+  volumeContainer.appendChild(volumeLabel);
+  volumeContainer.appendChild(volumeSlider);
 
-    return musicContainer;
+  musicContainer.appendChild(musicTitle);
+  musicContainer.appendChild(playPauseBtn);
+  musicContainer.appendChild(musicTypeContainer);
+  musicContainer.appendChild(volumeContainer);
+
+  // 產生音樂選項
+  updateMusicTypeOptions(currentLanguage);
+
+  return musicContainer;
 }
 
 function changeMusicType(musicType) {
@@ -222,18 +329,52 @@ function changeMusicType(musicType) {
         console.warn('切換音樂失敗:', error);
     });
 }
+const playPauseButtonTexts = {
+  'zh-Hant': { play: '▶️ 播放', pause: '⏸️ 暫停' },
+  'zh-Hans': { play: '▶️ 播放', pause: '⏸️ 暂停' },
+  'en': { play: '▶️ Play', pause: '⏸️ Pause' },
+  'ja': { play: '▶️ 再生', pause: '⏸️ 一時停止' },
+  'ko': { play: '▶️ 재생', pause: '⏸️ 일시중지' },
+  'de': { play: '▶️ Abspielen', pause: '⏸️ Pause' },
+  'fr': { play: '▶️ Lecture', pause: '⏸️ Pause' },
+  'it': { play: '▶️ Riproduci', pause: '⏸️ Pausa' },
+  'nl': { play: '▶️ Afspelen', pause: '⏸️ Pauze' },
+  'es': { play: '▶️ Reproducir', pause: '⏸️ Pausa' }
+};
+function updateMusicControlsLanguage(newLang) {
+  currentLanguage = newLang;
+
+  // 更新標題
+  const musicTitle = document.getElementById('musicTitle');
+  if (musicTitle) musicTitle.textContent = getText('musicTitle');
+
+  // 更新播放/暫停按鈕文字
+  updateMusicButton();
+
+  // 更新音樂類型標籤文字
+  const musicTypeLabel = document.getElementById('musicTypeLabel');
+  if (musicTypeLabel) musicTypeLabel.textContent = getText('musicTypeLabel');
+
+  // 更新音樂類型選項
+  updateMusicTypeOptions(newLang);
+
+  // 更新音量標籤
+  const volumeLabel = document.getElementById('volumeLabel');
+  if (volumeLabel) volumeLabel.textContent = getText('volumeLabel');
+}
+
 
 function updateMusicButton() {
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    if (playPauseBtn) {
-        if (isMusicPlaying) {
-            playPauseBtn.innerHTML = '⏸️ 暫停';
-            playPauseBtn.style.background = '#f44336';
-        } else {
-            playPauseBtn.innerHTML = '▶️ 播放';
-            playPauseBtn.style.background = '#4CAF50';
-        }
-    }
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  if (!playPauseBtn) return;
+  if (isMusicPlaying) {
+    playPauseBtn.innerHTML = getText('pause');
+    playPauseBtn.style.background = '#f44336';
+  } else {
+    playPauseBtn.innerHTML = getText('play');
+    playPauseBtn.style.background = '#4CAF50';
+  }
+}
     
     // 音量條同步
     const volumeSlider = document.querySelector('#musicControls input[type="range"]');
@@ -242,7 +383,7 @@ function updateMusicButton() {
     }
     
     console.log('按鈕狀態已更新，播放狀態:', isMusicPlaying);
-}
+
 
 function toggleMusic() {
     if (!backgroundMusic) {
@@ -278,11 +419,7 @@ function stopMusic() {
     }
 }
 
-// 當頁面載入完成後初始化背景音樂
-document.addEventListener('DOMContentLoaded', function() {
-    // 延遲初始化，確保頁面完全載入
-    setTimeout(initBackgroundMusic, 1000);
-});
+
 
 // 記錄訪問
 async function recordVisit(language) {
@@ -302,7 +439,9 @@ async function recordVisit(language) {
             console.warn(`無法記錄訪問，狀態碼: ${response.status}`);
             try {
                 const errorData = await response.json();
-                console.warn('錯誤詳情:', errorData);
+                
+
+// 將選項產生的工作改成一個函式，方便後rrorData);
             } catch (e) {
                 console.warn('無法解析錯誤回應');
             }
@@ -323,7 +462,6 @@ function getLangFromUrl() {
     return params.get('lang');
 }
 let apiKey = '';
-let currentLanguage = 'zh-Hant';
 const counterApiPath = '/api/counter';
 let counterFunctionalityDisabled = false;
 
@@ -548,6 +686,46 @@ async function initEmotions() {
     console.error('EmotionTree is not defined');
   }
 }
+function updateMusicTypeOptions(currentLang) {
+    const musicTypeSelect = document.getElementById('musicTypeSelect');
+    if (!musicTypeSelect) return; // 防呆
+    musicTypeSelect.innerHTML = '';
+    Object.keys(musicTypeNames).forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = musicTypeNames[type][currentLang] || musicTypeNames[type]['zh-Hant'];
+        if (type === currentMusicType) option.selected = true;
+        musicTypeSelect.appendChild(option);
+    });
+  }
+//c2
+  function updateMusicTitle(lang) {
+  const elem = document.getElementById('musicTitle');
+  if (elem) elem.textContent = getText('musicTitle', lang);
+}
+
+function updateMusicTypeLabel(lang) {
+  const elem = document.getElementById('musicTypeLabel');
+  if (elem) elem.textContent = getText('musicTypeLabel', lang);
+}
+
+function updateVolumeLabel(lang) {
+  const elem = document.getElementById('volumeLabel');
+  if (elem) elem.textContent = getText('volumeLabel', lang);
+}
+
+function updatePlayPauseButton(lang) {
+  const btn = document.getElementById('playPauseBtn');
+  if (!btn) return;
+  btn.innerHTML = isMusicPlaying ? getText('pause', lang) : getText('play', lang);
+  btn.style.background = isMusicPlaying ? '#f44336' : '#4CAF50';
+}
+
+
+
+
+
+
 
 
 function drawConnectors(branchCoords, btnIds) {
@@ -663,12 +841,21 @@ function createLanguageSelector() {
         option.textContent = lang.name;
         option.selected = currentLanguage === lang.code;
         langSelector.appendChild(option);
+        
     });
+    // 語言選擇器變更事件 c1
     langSelector.addEventListener('change', function() {
-        const newLanguage = this.value;
-        setCurrentLanguage(newLanguage);
-        recordVisit(newLanguage);
+         const newLang = this.value;
+        console.log('切換語言為:', newLang);
+        currentLanguage = newLang;
+        setCurrentLanguage(newLang);
+        recordVisit(newLang);
         resetEmotionSelection();
+
+        updateAllLabelsForLanguage(newLang);
+        
+        
+
     });
     langContainer.appendChild(langLabel);
     langContainer.appendChild(langSelector);
@@ -704,6 +891,35 @@ function createLanguageSelector() {
     mainContainer.appendChild(menuWrapper);
     document.body.appendChild(mainContainer);
 }
+
+function updateAllLabelsForLanguage(newLang) {
+    currentLanguage = newLang;
+  // 音樂區標題
+  const musicTitle = document.getElementById('musicTitle');
+  if (musicTitle) musicTitle.textContent = getText('musicTitle');
+
+  // 播放/暫停按鈕文字
+  updateMusicButton();
+
+  // 音樂類型標籤: 確保是獨立文字節點的label元素
+  const musicTypeLabel = document.getElementById('musicTypeLabel');
+  if (musicTypeLabel) musicTypeLabel.textContent = getText('musicTypeLabel');
+
+  // 動態重建音樂類型下拉選項文字
+  updateMusicTypeOptions(currentLanguage);
+   updateMusicTitle(currentLanguage);
+    updateMusicTypeLabel(currentLanguage);
+    updateVolumeLabel(currentLanguage);
+    updatePlayPauseButton(currentLanguage);
+    updateTTSVoiceOptions(currentLanguage);
+    updateMusicControlsLanguage(currentLanguage);
+  // 音量標籤
+  const volumeLabel = document.getElementById('volumeLabel');
+  if (volumeLabel) volumeLabel.textContent = getText('volumeLabel');
+
+  // 你可以在這裡加入更多要同步更新的元素
+}
+
 
 /*
 // 用API生成情緒列表
@@ -1079,6 +1295,7 @@ function renderPrayerSegments(scripture, explanation) {
         `;
     });
     verseElement.innerHTML = html;
+    
 }
 
 /**
@@ -1119,11 +1336,37 @@ function renderPrayerLoading() {
         `;
     });
     verseElement.innerHTML = html;
+
+     prayerSegments.forEach((seg, idx) => {
+    const select = document.getElementById(`voice-selector-${idx}`);
+    if (select) {
+      select.onchange = () => {
+        playPrayerSegment(idx);
+      };
+    }
+  });
 }
 
 /**
  * 播放指定段落的禱告詞
  */
+// 新增：根據語言選擇合適的 OpenAI 語音
+function getVoiceForLanguage(language) {
+    const voiceMapping = {
+        'zh-Hant': 'alloy',
+        'zh-Hans': 'alloy', 
+        'en': 'nova',
+        'ja': 'shimmer',
+        'ko': 'echo',
+        'de': 'onyx',
+        'fr': 'fable',
+        'it': 'alloy',
+        'nl': 'nova',
+        'es': 'shimmer'
+    };
+    return voiceMapping[language] || 'alloy';
+}
+
 async function playPrayerSegment(idx) {
     const seg = prayerSegments[idx];
     const button = document.getElementById(`play-button-${idx}`);
@@ -1135,25 +1378,36 @@ async function playPrayerSegment(idx) {
         playText.style.display = 'none';
         spinner.style.display = 'inline';
 
-        // 呼叫 Google TTS API
-        const ttsRes = await fetch('/api/google-tts', {
+        // 使用用戶選擇的語音，如果沒有選擇則使用語言對應的預設語音
+        const voiceToUse = selectedTTSVoice || getVoiceForLanguage(currentLanguage);
+
+        // 呼叫 OpenAI TTS API
+        const ttsRes = await fetch('/api/openai-tts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 text: seg.text,
-                languageCode: 'zh-TW' // 可根據 currentLanguage 調整
+                voice: voiceToUse,
+                model: 'tts-1',
+                speed: 1.0
             })
         });
+
         const ttsData = await ttsRes.json();
         if (!ttsRes.ok || !ttsData.audioContent) {
-            throw new Error(ttsData.error || 'Google TTS 產生語音失敗');
+            throw new Error(ttsData.error || 'OpenAI TTS 產生語音失敗');
         }
+
         // 播放 base64 mp3
         const audioElement = document.getElementById(`prayer-audio-${idx}`);
         audioElement.src = `data:audio/mp3;base64,${ttsData.audioContent}`;
         audioElement.style.display = 'block';
         audioElement.load();
         audioElement.play();
+
+        // 記錄音頻生成
+        await recordAudioGeneration(currentLanguage);
+
     } catch (error) {
         console.error('播放失敗:', error);
         alert(`${t('audioPlayError')}` + (error && error.message ? ('\n' + error.message) : ''));
@@ -1163,6 +1417,199 @@ async function playPrayerSegment(idx) {
         spinner.style.display = 'none';
     }
 }
+// OpenAI TTS 語音選項（多語言）
+const openAIVoices = {
+  alloy: {
+    'zh-Hant': '🎙️ 平衡 (Alloy)',
+    'zh-Hans': '🎙️ 平衡 (Alloy)',
+    'en': '🎙️ Balanced (Alloy)',
+    'ja': '🎙️ バランス (Alloy)',
+    'ko': '🎙️ 균형 (Alloy)',
+    'de': '🎙️ Ausgewogen (Alloy)',
+    'fr': '🎙️ Équilibré (Alloy)',
+    'it': '🎙️ Equilibrato (Alloy)',
+    'nl': '🎙️ Gebalanceerd (Alloy)',
+    'es': '🎙️ Equilibrado (Alloy)'
+  },
+  echo: {
+    'zh-Hant': '🎭 活潑 (Echo)',
+    'zh-Hans': '🎭 活泼 (Echo)',
+    'en': '🎭 Dynamic (Echo)',
+    'ja': '🎭 ダイナミック (Echo)',
+    'ko': '🎭 역동적 (Echo)',
+    'de': '🎭 Dynamisch (Echo)',
+    'fr': '🎭 Dynamique (Echo)',
+    'it': '🎭 Dinamico (Echo)',
+    'nl': '🎭 Dynamisch (Echo)',
+    'es': '🎭 Dinámico (Echo)'
+  },
+  fable: {
+    'zh-Hant': '📖 故事感 (Fable)',
+    'zh-Hans': '📖 故事感 (Fable)',
+    'en': '📖 Storytelling (Fable)',
+    'ja': '📖 ストーリーテリング (Fable)',
+    'ko': '📖 스토리텔링 (Fable)',
+    'de': '📖 Erzählend (Fable)',
+    'fr': '📖 Narratif (Fable)',
+    'it': '📖 Narrativo (Fable)',
+    'nl': '📖 Verhalend (Fable)',
+    'es': '📖 Narrativo (Fable)'
+  },
+  onyx: {
+    'zh-Hant': '🎤 低沉 (Onyx)',
+    'zh-Hans': '🎤 低沉 (Onyx)',
+    'en': '🎤 Deep (Onyx)',
+    'ja': '🎤 深い (Onyx)',
+    'ko': '🎤 깊은 (Onyx)',
+    'de': '🎤 Tief (Onyx)',
+    'fr': '🎤 Profond (Onyx)',
+    'it': '🎤 Profondo (Onyx)',
+    'nl': '🎤 Diep (Onyx)',
+    'es': '🎤 Profundo (Onyx)'
+  },
+  nova: {
+    'zh-Hant': '✨ 明亮 (Nova)',
+    'zh-Hans': '✨ 明亮 (Nova)',
+    'en': '✨ Bright (Nova)',
+    'ja': '✨ 明るい (Nova)',
+    'ko': '✨ 밝은 (Nova)',
+    'de': '✨ Hell (Nova)',
+    'fr': '✨ Brillant (Nova)',
+    'it': '✨ Brillante (Nova)',
+    'nl': '✨ Helder (Nova)',
+    'es': '✨ Brillante (Nova)'
+  },
+  shimmer: {
+    'zh-Hant': '🌟 溫柔 (Shimmer)',
+    'zh-Hans': '🌟 温柔 (Shimmer)',
+    'en': '🌟 Gentle (Shimmer)',
+    'ja': '🌟 優しい (Shimmer)',
+    'ko': '🌟 부드러운 (Shimmer)',
+    'de': '🌟 Sanft (Shimmer)',
+    'fr': '🌟 Doux (Shimmer)',
+    'it': '🌟 Gentile (Shimmer)',
+    'nl': '🌟 Zacht (Shimmer)',
+    'es': '🌟 Suave (Shimmer)'
+  }
+};
+async function playPrayerSegment(idx) {
+  const seg = prayerSegments[idx];
+  const button = document.getElementById(`play-button-${idx}`);
+  const spinner = document.getElementById(`loading-spinner-${idx}`);
+  const playText = document.getElementById(`play-text-${idx}`);
+  const voiceSelect = document.getElementById(`voice-selector-${idx}`);
+  const audioElement = document.getElementById(`prayer-audio-${idx}`);
+
+  try {
+    button.disabled = true;
+    playText.style.display = 'none';
+    spinner.style.display = 'inline';
+
+    // 讀取該段選擇的語音
+    const selectedVoice = voiceSelect ? voiceSelect.value : 'alloy';
+
+    // 呼叫 OpenAI TTS API，取得 base64 音頻
+    const response = await fetch('/api/openai-tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: seg.text,
+        voice: selectedVoice,
+        model: 'tts-1',
+        speed: 1.0
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(errText || `HTTP error! ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.audioContent) {
+      throw new Error('沒有收到 audioContent');
+    }
+
+    // 設置 <audio> 播放
+    audioElement.src = `data:audio/mp3;base64,${data.audioContent}`;
+    audioElement.style.display = 'block';
+    audioElement.load();
+    await audioElement.play();
+
+    // 你現有的錄音計數呼叫
+    if (typeof recordAudioGeneration === 'function') {
+      await recordAudioGeneration(currentLanguage);
+    }
+
+  } catch (error) {
+    console.error('播放失敗:', error);
+    alert('語音播放失敗: ' + (error.message || error));
+  } finally {
+    button.disabled = false;
+    playText.style.display = 'inline';
+    spinner.style.display = 'none';
+  }
+}
+
+
+// 用戶語音選擇變數
+let selectedTTSVoice = 'alloy';
+
+// 更新語音選項函式
+function updateTTSVoiceOptions(lang) {
+  const voiceSelect = document.getElementById('ttsVoiceSelect');
+  if (!voiceSelect) return;
+  voiceSelect.innerHTML = '';
+  Object.keys(openAIVoices).forEach(voice => {
+    const option = document.createElement('option');
+    option.value = voice;
+    option.textContent = openAIVoices[voice][lang] || openAIVoices[voice]['zh-Hant'];
+    if (voice === selectedTTSVoice) option.selected = true;
+    voiceSelect.appendChild(option);
+  });
+}
+
+
+
+
+// OpenAI TTS 播放函式
+async function playOpenAITTS(text, userVoice) {
+  const voiceToUse = userVoice || selectedTTSVoice || getVoiceForLanguage(currentLanguage);
+  try {
+    const response = await fetch('/api/openai-tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        voice: voiceToUse,
+        model: 'tts-1',
+        speed: 1.0
+      })
+    });
+
+    if (!response.ok) {
+      let errorText = await response.text();
+      throw new Error(errorText || `HTTP error! status: ${response.status}`);
+    }
+
+
+
+    const data = await response.json();
+    if (data.audioContent) {
+      const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
+      audio.play();
+      await recordAudioGeneration(currentLanguage); // 你的統計
+    } else {
+      throw new Error('No audio content received');
+    }
+  } catch (error) {
+    console.error('OpenAI TTS 播放失敗:', error);
+    alert('語音播放失敗: ' + error.message);
+  }
+}
+
+
 
 // 修改playPrayer函數
 async function playPrayer(encodedText, encodedInstructions = '') {
@@ -1203,6 +1650,7 @@ async function playPrayer(encodedText, encodedInstructions = '') {
         spinner.style.display = 'none';
     }
 }
+//
 
 // 檢查API端點是否可用，如果不可用，則禁用計數器功能
 async function checkCounterEndpoint() {
