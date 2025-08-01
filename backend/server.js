@@ -7,9 +7,8 @@ const app = express();
 
 app.use(express.json());
 
-// -------- Gemini API 產生禱告或經文 --------
+// -------- OpenAI API 產生禱告或經文 --------
 
-console.log('OpenAI Key:', OPENAI_API_KEY);
 
 app.post('/api/gemini', async (req, res) => {
 
