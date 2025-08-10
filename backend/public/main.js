@@ -1,18 +1,28 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // 延遲初始化，確保頁面完全載入
-    const musicControls = createMusicControls();
-  if (musicControls) {
-    document.body.appendChild(musicControls);
-  }
-  updateAllLabelsForLanguage(currentLanguage());
-  setTimeout(initBackgroundMusic, 1000);
-});
+
 // 背景音樂相關變數
 let backgroundMusic = null;
 let isMusicPlaying = false ;
 let musicVolume = 0.3; // 預設音量 30%
 let currentMusicType = 'piano'; // 預設音樂類型
-let currentLanguage = 'zh-Hant'; // 預設語言
+let currentLanguage = 'zh-Hant';
+
+// 檢查是否有 getCurrentLanguage 函數，如果沒有則創建一個
+if (typeof getCurrentLanguage === 'undefined') {
+    window.getCurrentLanguage = function() {
+        return currentLanguage;
+    };
+}
+
+// 檢查是否有 setCurrentLanguage 函數，如果沒有則創建一個
+if (typeof setCurrentLanguage === 'undefined') {
+    window.setCurrentLanguage = function(lang) {
+        currentLanguage = lang;
+        // 更新音樂控制器的語言
+        if (typeof updateAllLabelsForLanguage === 'function') {
+            updateAllLabelsForLanguage(lang);
+        }
+    };
+}
 
 const localizedTexts = {
   musicTitle: {
@@ -103,7 +113,7 @@ const musicTypeNames = {
     'ko': '💧 물소리',
     'de': '💧 Wassergeräusche',
     'fr': '💧 Bruits d\'eau',
-    'it': '💧 Suoni d’acqua',
+    'it': '💧 Suoni d\'acqua',
     'nl': '💧 Watergeluiden',
     'es': '💧 Sonidos de agua'
   },
@@ -166,12 +176,32 @@ function initBackgroundMusic() {
 
 
 function createMusicControls() {
+    // 檢查是否已存在音樂控制按鈕
     let musicContainer = document.getElementById('musicControls');
-    if (musicContainer) return musicContainer;
+    if (musicContainer) return musicContainer; // 只建立一次
 
+    // 創建音樂控制容器
     musicContainer = document.createElement('div');
     musicContainer.id = 'musicControls';
-    musicContainer.style.cssText = `
+    
+    // 響應式樣式
+    const isMobile = window.innerWidth <= 768;
+    const containerStyle = isMobile ? `
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 180px;
+        max-width: 280px;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+    ` : `
         background: rgba(255, 255, 255, 0.95);
         border-radius: 10px;
         padding: 15px;
@@ -181,7 +211,10 @@ function createMusicControls() {
         flex-direction: column;
         gap: 10px;
         min-width: 200px;
+        max-width: 300px;
     `;
+    
+    musicContainer.style.cssText = containerStyle;
 
     // 音樂標題
     const musicTitle = document.createElement('div');
@@ -190,9 +223,9 @@ function createMusicControls() {
     musicTitle.style.cssText = `
         font-weight: bold;
         text-align: center;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         color: #333;
-        font-size: 16px;
+        font-size: ${isMobile ? '14px' : '16px'};
     `;
 
     // 播放/暫停按鈕
@@ -200,47 +233,64 @@ function createMusicControls() {
     playPauseBtn.id = 'playPauseBtn';
     playPauseBtn.innerHTML = getText('play');
     playPauseBtn.style.cssText = `
-        padding: 8px 12px;
+        padding: ${isMobile ? '10px 16px' : '8px 12px'};
         border: none;
         border-radius: 5px;
         background: ${isMusicPlaying ? '#f44336' : '#4CAF50'};
         color: white;
         cursor: pointer;
-        font-size: 14px;
+        font-size: ${isMobile ? '13px' : '14px'};
         transition: background 0.3s;
+        min-height: ${isMobile ? '44px' : 'auto'};
     `;
     playPauseBtn.onclick = function() {
         toggleMusic();
     };
 
-const musicTypeContainer = document.createElement('div');
-  musicTypeContainer.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-  `;
+    // 音樂類型選擇器
+    const musicTypeContainer = document.createElement('div');
+    musicTypeContainer.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    `;
 
-  const musicTypeLabel = document.createElement('label');
+    const musicTypeLabel = document.createElement('label');
 musicTypeLabel.id = 'musicTypeLabel';
 musicTypeLabel.textContent = getText('musicTypeLabel');
-  musicTypeLabel.style.cssText = `
-      font-weight: bold;
-      color: #333;
-      font-size: 14px;
-  `;
+    musicTypeLabel.style.cssText = `
+        font-weight: bold;
+        color: #333;
+        font-size: ${isMobile ? '12px' : '14px'};
+    `;
 
-  const musicTypeSelect = document.createElement('select');
-  musicTypeSelect.id = 'musicTypeSelect';
-  musicTypeSelect.style.cssText = `
-      padding: 5px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-  `;
-  
+    const musicTypeSelect = document.createElement('select');
+    musicTypeSelect.id = 'musicTypeSelect';
+    musicTypeSelect.style.cssText = `
+        padding: ${isMobile ? '8px' : '5px'};
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-size: ${isMobile ? '12px' : '14px'};
+        min-height: ${isMobile ? '44px' : 'auto'};
+    `;
 
-  musicTypeContainer.appendChild(musicTypeLabel);
-  musicTypeContainer.appendChild(musicTypeSelect);
+    // 添加音樂選項
+    Object.keys(musicTypeNames).forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = musicTypeNames[type];
+        if (type === currentMusicType) {
+            option.selected = true;
+        }
+        musicTypeSelect.appendChild(option);
+    });
+
+    musicTypeSelect.onchange = function() {
+        changeMusicType(this.value);
+    };
+
+    musicTypeContainer.appendChild(musicTypeLabel);
+    musicTypeContainer.appendChild(musicTypeSelect);
 
   updateMusicTypeOptions(currentLanguage);
 
@@ -248,59 +298,151 @@ musicTypeLabel.textContent = getText('musicTypeLabel');
     changeMusicType(musicTypeSelect.value);
   };
 
-  const volumeContainer = document.createElement('div');
-  volumeContainer.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-  `;
+    const volumeContainer = document.createElement('div');
+    volumeContainer.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    `;
 
     const volumeLabel = document.createElement('label');
     volumeLabel.id = 'volumeLabel';
     volumeLabel.textContent = getText('volumeLabel');
     volumeLabel.style.cssText = `
-      font-weight: bold;
-      color: #333;
-      font-size: 14px;
-  `;
+        font-weight: bold;
+        color: #333;
+        font-size: ${isMobile ? '12px' : '14px'};
+    `;
 
-  const volumeSlider = document.createElement('input');
-  volumeSlider.type = 'range';
-  volumeSlider.min = '0';
-  volumeSlider.max = '100';
-  volumeSlider.value = musicVolume * 100;
-  volumeSlider.style.cssText = `
-      width: 100%;
-      height: 4px;
-      border-radius: 2px;
-      background: #ddd;
-      outline: none;
-  `;
-
-  volumeSlider.oninput = () => {
-    musicVolume = volumeSlider.value / 100;
-    if (backgroundMusic) backgroundMusic.volume = musicVolume;
-  };
-
-  // 音量條同步機制
-  setInterval(() => {
-    if (backgroundMusic && volumeSlider.value != Math.round(backgroundMusic.volume * 100)) {
-      volumeSlider.value = Math.round(backgroundMusic.volume * 100);
+    const volumeSlider = document.createElement('input');
+    volumeSlider.type = 'range';
+    volumeSlider.min = '0';
+    volumeSlider.max = '100';
+    volumeSlider.value = musicVolume * 100;
+    volumeSlider.style.cssText = `
+        width: 100%;
+        height: ${isMobile ? '6px' : '4px'};
+        border-radius: 2px;
+        background: #ddd;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+    `;
+    
+    // 自定義滑塊樣式
+    if (isMobile) {
+        volumeSlider.style.cssText += `
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ddd;
+            border-radius: 3px;
+            height: 6px;
+        `;
+        
+        // 添加觸控優化
+        volumeSlider.addEventListener('touchstart', function() {
+            this.style.background = '#6a85b6';
+        });
+        
+        volumeSlider.addEventListener('touchend', function() {
+            this.style.background = '#ddd';
+        });
     }
-  }, 1000);
+    
+    volumeSlider.oninput = function() {
+        musicVolume = this.value / 100;
+        if (backgroundMusic) {
+            backgroundMusic.volume = musicVolume;
+        }
+    };
 
-  volumeContainer.appendChild(volumeLabel);
-  volumeContainer.appendChild(volumeSlider);
+    // 音量條同步
+    setInterval(() => {
+        if (backgroundMusic && volumeSlider.value != Math.round(backgroundMusic.volume * 100)) {
+            volumeSlider.value = Math.round(backgroundMusic.volume * 100);
+        }
+    }, 1000);
 
-  musicContainer.appendChild(musicTitle);
-  musicContainer.appendChild(playPauseBtn);
-  musicContainer.appendChild(musicTypeContainer);
-  musicContainer.appendChild(volumeContainer);
+    volumeContainer.appendChild(volumeLabel);
+    volumeContainer.appendChild(volumeSlider);
 
-  // 產生音樂選項
-  updateMusicTypeOptions(currentLanguage);
+    // 組裝音樂控制
+    musicContainer.appendChild(musicTitle);
+    musicContainer.appendChild(playPauseBtn);
+    musicContainer.appendChild(musicTypeContainer);
+    musicContainer.appendChild(volumeContainer);
 
-  return musicContainer;
+    // 在手機上添加關閉按鈕
+    if (isMobile) {
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '✕';
+        closeBtn.style.cssText = `
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        closeBtn.onclick = function() {
+            musicContainer.style.display = 'none';
+        };
+        musicContainer.appendChild(closeBtn);
+        
+        // 添加拖拽功能
+        let isDragging = false;
+        let startX, startY, startLeft, startTop;
+        
+        musicTitle.style.cursor = 'move';
+        musicTitle.addEventListener('mousedown', startDrag);
+        musicTitle.addEventListener('touchstart', startDrag);
+        
+        function startDrag(e) {
+            e.preventDefault();
+            isDragging = true;
+            const rect = musicContainer.getBoundingClientRect();
+            startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+            startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
+            startLeft = rect.left;
+            startTop = rect.top;
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag);
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+        
+        function drag(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            const currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+            const currentY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
+            
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+            
+            musicContainer.style.left = (startLeft + deltaX) + 'px';
+            musicContainer.style.top = (startTop + deltaY) + 'px';
+        }
+        
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+    }
+
+    return musicContainer;
 }
 
 function changeMusicType(musicType) {
@@ -324,51 +466,50 @@ function changeMusicType(musicType) {
     });
 }
 const playPauseButtonTexts = {
-  'zh-Hant': { play: '▶️ 播放', pause: '⏸️ 暫停' },
-  'zh-Hans': { play: '▶️ 播放', pause: '⏸️ 暂停' },
-  'en': { play: '▶️ Play', pause: '⏸️ Pause' },
-  'ja': { play: '▶️ 再生', pause: '⏸️ 一時停止' },
-  'ko': { play: '▶️ 재생', pause: '⏸️ 일시중지' },
-  'de': { play: '▶️ Abspielen', pause: '⏸️ Pause' },
-  'fr': { play: '▶️ Lecture', pause: '⏸️ Pause' },
-  'it': { play: '▶️ Riproduci', pause: '⏸️ Pausa' },
-  'nl': { play: '▶️ Afspelen', pause: '⏸️ Pauze' },
-  'es': { play: '▶️ Reproducir', pause: '⏸️ Pausa' }
-};
-function updateMusicControlsLanguage(newLang) {
-  currentLanguage = newLang;
-
-  // 更新標題
-  const musicTitle = document.getElementById('musicTitle');
-  if (musicTitle) musicTitle.textContent = getText('musicTitle');
-
-  // 更新播放/暫停按鈕文字
-  updateMusicButton();
-
-  // 更新音樂類型標籤文字
-  const musicTypeLabel = document.getElementById('musicTypeLabel');
-  if (musicTypeLabel) musicTypeLabel.textContent = getText('musicTypeLabel');
-
-  // 更新音樂類型選項
-  updateMusicTypeOptions(newLang);
-
-  // 更新音量標籤
-  const volumeLabel = document.getElementById('volumeLabel');
-  if (volumeLabel) volumeLabel.textContent = getText('volumeLabel');
-}
-
+    'zh-Hant': { play: '▶️ 播放', pause: '⏸️ 暫停' },
+    'zh-Hans': { play: '▶️ 播放', pause: '⏸️ 暂停' },
+    'en': { play: '▶️ Play', pause: '⏸️ Pause' },
+    'ja': { play: '▶️ 再生', pause: '⏸️ 一時停止' },
+    'ko': { play: '▶️ 재생', pause: '⏸️ 일시중지' },
+    'de': { play: '▶️ Abspielen', pause: '⏸️ Pause' },
+    'fr': { play: '▶️ Lecture', pause: '⏸️ Pause' },
+    'it': { play: '▶️ Riproduci', pause: '⏸️ Pausa' },
+    'nl': { play: '▶️ Afspelen', pause: '⏸️ Pauze' },
+    'es': { play: '▶️ Reproducir', pause: '⏸️ Pausa' }
+  };
+  function updateMusicControlsLanguage(newLang) {
+    currentLanguage = newLang;
+  
+    // 更新標題
+    const musicTitle = document.getElementById('musicTitle');
+    if (musicTitle) musicTitle.textContent = getText('musicTitle');
+  
+    // 更新播放/暫停按鈕文字
+    updateMusicButton();
+  
+    // 更新音樂類型標籤文字
+    const musicTypeLabel = document.getElementById('musicTypeLabel');
+    if (musicTypeLabel) musicTypeLabel.textContent = getText('musicTypeLabel');
+  
+    // 更新音樂類型選項
+    updateMusicTypeOptions(newLang);
+  
+    // 更新音量標籤
+    const volumeLabel = document.getElementById('volumeLabel');
+    if (volumeLabel) volumeLabel.textContent = getText('volumeLabel');
+  }
 
 function updateMusicButton() {
-  const playPauseBtn = document.getElementById('playPauseBtn');
-  if (!playPauseBtn) return;
-  if (isMusicPlaying) {
-    playPauseBtn.innerHTML = getText('pause');
-    playPauseBtn.style.background = '#f44336';
-  } else {
-    playPauseBtn.innerHTML = getText('play');
-    playPauseBtn.style.background = '#4CAF50';
-  }
-}
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    if (!playPauseBtn) return;
+    
+    if (isMusicPlaying) {
+        playPauseBtn.innerHTML = getText('pause');
+        playPauseBtn.style.background = '#f44336';
+    } else {
+        playPauseBtn.innerHTML = getText('play');
+        playPauseBtn.style.background = '#4CAF50';
+    }
     
     // 音量條同步
     const volumeSlider = document.querySelector('#musicControls input[type="range"]');
@@ -377,6 +518,7 @@ function updateMusicButton() {
     }
     
     console.log('按鈕狀態已更新，播放狀態:', isMusicPlaying);
+}
 
 
 function toggleMusic() {
@@ -413,6 +555,7 @@ function stopMusic() {
     }
 }
 
+// 當頁面載入完成後初始化背景音樂
 
 
 // 記錄訪問
@@ -433,9 +576,7 @@ async function recordVisit(language) {
             console.warn(`無法記錄訪問，狀態碼: ${response.status}`);
             try {
                 const errorData = await response.json();
-                
-
-// 將選項產生的工作改成一個函式，方便後rrorData);
+                console.warn('錯誤詳情:', errorData);
             } catch (e) {
                 console.warn('無法解析錯誤回應');
             }
@@ -646,17 +787,21 @@ async function initEmotions() {
   const currentEmotions = emotionsByLang[getCurrentLanguage()] || emotionsByLang['zh-Hant'];
   emotionHistory.push(currentEmotions);
 
-  let selectedEmotion = null; 
+  let selectedEmotion = null; // 作用域提升
 
   if (window.EmotionTree) {
     EmotionTree({
       emotions: currentEmotions,
       onSelect: (emotionText) => {
         selectedEmotion = emotionText;
+        // 可加上高亮效果
       },
       containerId: 'mainEmotions'
     });
+
     renderPersistentCustomEmotionInput();
+
+    // 綁定提交事件（確保元素已存在）
     const submitBtn = document.getElementById('emotionSubmit');
     if (submitBtn) {
       submitBtn.onclick = () => {
@@ -710,12 +855,6 @@ function updatePlayPauseButton(lang) {
   btn.innerHTML = isMusicPlaying ? getText('pause', lang) : getText('play', lang);
   btn.style.background = isMusicPlaying ? '#f44336' : '#4CAF50';
 }
-
-
-
-
-
-
 
 
 function drawConnectors(branchCoords, btnIds) {
@@ -831,17 +970,13 @@ function createLanguageSelector() {
         option.textContent = lang.name;
         option.selected = currentLanguage === lang.code;
         langSelector.appendChild(option);
-        
     });
-    // 語言選擇器變更事件 c1
     langSelector.addEventListener('change', function() {
-         const newLang = this.value;
-        console.log('切換語言為:', newLang);
-        currentLanguage = newLang;
-        setCurrentLanguage(newLang);
-        recordVisit(newLang);
+        const newLanguage = this.value;
+        setCurrentLanguage(newLanguage);
+        recordVisit(newLanguage);
         resetEmotionSelection();
-
+        updateMusicTypeOptions(newLanguage);
     });
     langContainer.appendChild(langLabel);
     langContainer.appendChild(langSelector);
@@ -877,77 +1012,45 @@ function createLanguageSelector() {
     mainContainer.appendChild(menuWrapper);
     document.body.appendChild(mainContainer);
 }
-
 function updateAllLabelsForLanguage(newLang) {
     currentLanguage = newLang;
-  // 音樂區標題
-  const musicTitle = document.getElementById('musicTitle');
-  if (musicTitle) musicTitle.textContent = getText('musicTitle');
+    
+    // 音樂區標題
+    const musicTitle = document.getElementById('musicTitle');
+    if (musicTitle) musicTitle.textContent = getText('musicTitle');
 
-  // 播放/暫停按鈕文字
-  updateMusicButton();
+    // 播放/暫停按鈕文字
+    updateMusicButton();
 
-  // 音樂類型標籤: 確保是獨立文字節點的label元素
-  const musicTypeLabel = document.getElementById('musicTypeLabel');
-  if (musicTypeLabel) musicTypeLabel.textContent = getText('musicTypeLabel');
+    // 音樂類型標籤
+    const musicTypeLabel = document.getElementById('musicTypeLabel');
+    if (musicTypeLabel) musicTypeLabel.textContent = getText('musicTypeLabel');
 
-  // 動態重建音樂類型下拉選項文字
-  updateMusicTypeOptions(currentLanguage);
-   updateMusicTitle(currentLanguage);
+    // 音量標籤
+    const volumeLabel = document.getElementById('volumeLabel');
+    if (volumeLabel) volumeLabel.textContent = getText('volumeLabel');
+
+    // 動態重建音樂類型下拉選項文字
+    updateMusicTypeOptions(currentLanguage);
+    
+    // 更新其他音樂控制元素
+    updateMusicTitle(currentLanguage);
     updateMusicTypeLabel(currentLanguage);
     updateVolumeLabel(currentLanguage);
     updatePlayPauseButton(currentLanguage);
-    updateTTSVoiceOptions(currentLanguage);
-    updateMusicControlsLanguage(currentLanguage);
-  // 音量標籤
-  const volumeLabel = document.getElementById('volumeLabel');
-  if (volumeLabel) volumeLabel.textContent = getText('volumeLabel');
-
-  // 你可以在這裡加入更多要同步更新的元素
-}
-
-
-/*
-// 用API生成情緒列表
-async function generateEmotions(context, isFirst = false) {
-    // 直接呼叫後端 API 產生情緒，不再由前端呼叫 Groq API 或檢查金鑰
-    const fallbackEmotions = {
-        'zh-Hant': ['焦慮', '悲傷', '孤獨', '壓力', '喜樂', t('otherSituation')],
-        'zh-Hans': ['焦虑', '悲伤', '孤独', '压力', '喜乐', t('otherSituation')],
-        'en': ['Anxiety', 'Sadness', 'Loneliness', 'Stress', 'Joy', t('otherSituation')],
-        'ja': ['不安', '悲しみ', '孤独', 'ストレス', '喜び', t('otherSituation')],
-        'ko': ['불안', '슬픔', '외로움', '스트레스', '기쁨', t('otherSituation')],
-        'de': ['Angst', 'Traurigkeit', 'Einsamkeit', 'Stress', 'Freude', t('otherSituation')],
-        'fr': ['Anxiété', 'Tristesse', 'Solitude', 'Stress', 'Joie', t('otherSituation')],
-        'it': ['Ansia', 'Tristezza', 'Solitudine', 'Stress', 'Gioia', t('otherSituation')],
-        'nl': ['Angst', 'Verdriet', 'Eenzaamheid', 'Stress', 'Vreugde', t('otherSituation')],
-        'es': ['Ansiedad', 'Tristeza', 'Soledad', 'Estrés', 'Alegría', t('otherSituation')]
-    };
-    try {
-        const response = await fetch('/api/prayer', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic: context })
-        });
-        if (response.ok) {
-            const data = await response.json();
-            // 假設後端回傳格式為 { result: [ ... ] }
-            if (Array.isArray(data.result)) {
-                return data.result;
-            } else if (typeof data.result === 'string') {
-                // 若後端回傳字串，嘗試以空格分割
-                return data.result.split(' ');
-            } else {
-                return fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
-            }
-        } else {
-            return fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
-        }
-    } catch (e) {
-        return fallbackEmotions[currentLanguage] || fallbackEmotions['zh-Hant'];
+    
+    // 檢查並更新 TTS 語音選項（如果存在）
+    if (typeof updateTTSVoiceOptions === 'function') {
+        updateTTSVoiceOptions(currentLanguage);
+    }
+    
+    // 檢查並更新音樂控制語言（如果存在）
+    if (typeof updateMusicControlsLanguage === 'function') {
+        updateMusicControlsLanguage(currentLanguage);
     }
 }
-*/
+
+
 
 
 
@@ -965,10 +1068,12 @@ function submitCustomEmotion() {
 
 // 重置情緒選擇
 function resetEmotionSelection() {
-    otherSituationClickCount = 0;
+    otherSituationClickCount = 0; // 重置計數器
+    // 重新初始化情緒按鈕
+    // 這裡直接呼叫 initEmotions 即可，因為它已經根據語言產生情緒按鈕
     initEmotions();
     document.getElementById('backButton').style.display = 'none';
-    document.getElementById('verse').innerHTML = ''; 
+    document.getElementById('verse').innerHTML = ''; // 清空經文區域
     renderPersistentCustomEmotionInput();
 }
 
@@ -1001,9 +1106,12 @@ async function getVoiceAndInstructions(emotion, prayerText = '') {
             return { voice: 'alloy', instructions: '' };
         }
         
+        // 定義給AI的內容，根據是否有禱告文調整提示
         let content = '';
         if (prayerText) {
-            content = `基於用戶情緒「${emotion}」及以下禱告文，請執行兩項任務：\n\n
+            // 如果有禱告文，生成音色選擇和語音指令
+            content = `基於用戶情緒「${emotion}」及以下禱告文，請執行兩項任務：
+
 1. 從以下六個OpenAI TTS語音中選擇最適合的一個：
    - Alloy: 平衡的聲音，適合一般用途，提供清晰度和溫暖感
    - Echo: 更動態的聲音，可以為通知增添興奮感
@@ -1029,6 +1137,7 @@ Emotions: [情緒描述]
 Pronunciation: [發音重點描述]
 Pauses: [停頓描述]`;
         } else {
+            // 如果沒有禱告文，只選擇音色
             content = `基於用戶的情緒「${emotion}」，請從以下六個OpenAI TTS語音中選擇最適合的一個:
 Alloy: 平衡的聲音，適合一般用途，提供清晰度和溫暖感
 Echo: 更動態的聲音，可以為通知增添興奮感
@@ -1041,39 +1150,36 @@ Shimmer: 柔和且舒緩的聲音，適合平靜的環境
 VOICE: [選擇的語音名稱，小寫]`;
         }
         
+        // 改為呼叫 Groq API 代理端點
         const response = await fetch('/api/OpenAI', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content, prayerText })
         });
-        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        const data = await response.json();
-        
-        // 解析格式示例：後端預期回傳 { content: "VOICE: alloy\n...\nINSTRUCTIONS: ..." }
-        if (!data?.content || typeof data.content !== 'string') {
+        const groqData = await response.json();const data = await response.json();        if (!groqData?.choices?.[0]?.message?.content) {
             throw new Error('Invalid API response structure');
         }
-
+        // 解析回應
         const responseText = data.content.trim();
-
+        
         // 提取語音名稱
         const voiceMatch = responseText.match(/VOICE:\s*(\w+)/i);
-        let voice = 'alloy'; // 預設語音
-
+        let voice = 'alloy'; // 默認值
+        
         if (voiceMatch && voiceMatch[1]) {
             const extractedVoice = voiceMatch[1].toLowerCase().trim();
+            // 確保回傳的是有效的語音選項
             const validVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
             if (validVoices.includes(extractedVoice)) {
                 voice = extractedVoice;
             } else {
-                console.warn('API 返回的語音名稱無效:', extractedVoice);
+                console.warn('API返回了無效的語音名稱:', extractedVoice);
             }
         }
-
+        
         // 提取指令（如果有）
         let instructions = '';
         if (prayerText) {
@@ -1082,15 +1188,13 @@ VOICE: [選擇的語音名稱，小寫]`;
                 instructions = instructionsMatch[1].trim();
             }
         }
-
+        
         return { voice, instructions };
-
     } catch (error) {
         console.error('獲取語音建議及指令失敗:', error);
-        return { voice: 'alloy', instructions: '' }; // 出錯時回傳預設
+        return { voice: 'alloy', instructions: '' }; // 出錯時使用默認語音
     }
 }
-
 
 /**
  * 多段禱告詞管理
@@ -1108,24 +1212,30 @@ let countdownSeconds = 0;
  * @param {string} emotion - 用戶情緒
  * @param {boolean} isFirst - 是否為第一段
  */
-
 async function getEmotionalVerse(emotion, isFirst = false) {
+    // 前端不再檢查 apiKey
     if (isFirst) {
         prayerSegments = [];
     }
+    // 無論是否為第一次，都要更新 prayerEmotion
     prayerEmotion = emotion;
-    window.prayerEmotion = emotion;
+    window.prayerEmotion = emotion; // 全域同步
+    // 計算第幾段
     const segmentNumber = prayerSegments.length + 1;
-    let prayerLength = 100;
-    if (segmentNumber === 1) prayerLength = 120;
-    else if (segmentNumber === 2) prayerLength = 200;
-    else prayerLength = 250;
+    // 設定禱告詞長度
+    let prayerLength = 100; // 預設100字以上
+    if (segmentNumber === 1) prayerLength = 120; // 約1分鐘
+    else if (segmentNumber === 2) prayerLength = 200; // 約1.5~2分鐘
+    else prayerLength = 250; // 2~2.5分鐘
 
+    // 初始時先設置默認語音，稍後會根據禱告文內容再做選擇
     let voiceData = { voice: 'alloy', instructions: '' };
     try {
         const verseElement = document.getElementById('verse');
+        // loading區塊只顯示在最上方，舊禱告詞不消失
         renderPrayerLoading();
 
+        // 開始倒數計時
         countdownSeconds = 0;
         clearInterval(countdownInterval);
         countdownInterval = setInterval(() => {
@@ -1136,25 +1246,22 @@ async function getEmotionalVerse(emotion, isFirst = false) {
             }
         }, 1000);
 
-        const response = await fetch('/api/OpenAI', {
+        // 產生禱告詞
+        // 改為呼叫 Groq API 代理端點
+        const response = await fetch('/api/groq', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 emotion,
                 currentLanguage,
-                prayerLength,
-            }),
+                prayerLength
+            })
         });
-
         const data = await response.json();
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        // 這裡改成用後端回傳的多欄位格式物件
-        if (
-            typeof data.prayer !== 'string' ||
-            typeof data.scripture !== 'string' ||
-            typeof data.explanation !== 'string'
-        ) {
+        if (!data.choices || !Array.isArray(data.choices) || !data.choices[0]?.message?.content) {
+            // 若有 error 屬性，顯示原始錯誤
+            
             let errorMsg = '';
             if (data.error) {
                 errorMsg = data.error + (data.detail ? `: ${data.detail}` : '');
@@ -1163,49 +1270,88 @@ async function getEmotionalVerse(emotion, isFirst = false) {
             }
             throw new Error('Invalid API response structure\n' + errorMsg);
         }
+        const responseText = data.choices[0].message.content.trim();
 
-        const prayerText = data.prayer.trim();
-        const scripture = data.scripture.trim();
-        const explanation = data.explanation.trim();
+        // 嘗試多種格式解析
+        let scripture = '', explanation = '', prayerText = '';
+        // 1. 標準格式
+        const scriptureKey = t('scripture').replace('：', '');
+        const explanationKey = t('explanation').replace('：', '');
+        const prayerKey = t('prayer').replace('：', '');
+        let verseMatch = responseText.match(new RegExp(`【${scriptureKey}】([\s\S]+?)\n【${explanationKey}】`));
+        let comfortMatch = responseText.match(new RegExp(`【${explanationKey}】([\s\S]+?)\n【${prayerKey}】`));
+        let prayerMatch = responseText.match(new RegExp(`【${prayerKey}】([\s\S]+)`));
 
-        // 你原本的正則系統解析多標籤純文字可省略，
-        // 因為後端直接已分好三段文字，可直接使用
+        if (verseMatch && comfortMatch && prayerMatch) {
+            scripture = verseMatch[1].trim();
+            explanation = comfortMatch[1].trim();
+            prayerText = prayerMatch[1].trim();
+        } else {
+            // 2. 嘗試解析 markdown/星號格式
+            // 例如 prayer, verse, explanation 以 **title** 或 **標題** 開頭
+            const prayerMd = responseText.match(/\*\*禱告\*\*[\s\S]+?\n([\s\S]+?)\n\*\*聖經經文\*\*/);
+            const verseMd = responseText.match(/\*\*聖經經文\*\*[\s\S]+?\n([\s\S]+?)\n\*\*簡短解說\*\*/);
+            const explanationMd = responseText.match(/\*\*簡短解說\*\*[\s\S]+?\n([\s\S]+?)(\n|$)/);
+            if (prayerMd && verseMd && explanationMd) {
+                prayerText = prayerMd[1].trim();
+                scripture = verseMd[1].trim();
+                explanation = explanationMd[1].trim();
+            } else {
+                // 3. fallback: 只要有 prayer/verse/explanation 關鍵字就分段
+                const prayerIdx = responseText.indexOf('禱告');
+                const verseIdx = responseText.indexOf('聖經經文');
+                const explanationIdx = responseText.indexOf('簡短解說');
+                if (prayerIdx !== -1 && verseIdx !== -1 && explanationIdx !== -1) {
+                    prayerText = responseText.substring(prayerIdx + 2, verseIdx).trim();
+                    scripture = responseText.substring(verseIdx + 4, explanationIdx).trim();
+                    explanation = responseText.substring(explanationIdx + 4).trim();
+                }
+            }
+        }
 
         if (prayerText && scripture && explanation) {
+            // 取得語音建議
             try {
                 voiceData = await getVoiceAndInstructions(emotion, prayerText);
             } catch (error) {
                 console.error('選擇語音時出錯，使用默認語音:', error);
             }
-
+            // prepend 新段落
             prayerSegments.unshift({
                 text: prayerText,
                 voice: voiceData.voice,
                 instructions: voiceData.instructions,
-                number: segmentNumber,
+                number: segmentNumber
             });
-
+            // 清除倒數計時器
             clearInterval(countdownInterval);
+            // 移除 loading 區塊並渲染所有段落
             renderPrayerSegments(scripture, explanation);
         } else {
             clearInterval(countdownInterval);
+            // 移除 loading 區塊並渲染所有段落
             renderPrayerSegments();
+            const verseElement = document.getElementById('verse');
             verseElement.classList.remove('loading-verse');
-            verseElement.innerHTML = `${t('parseError')}<br>資料不完整，請稍後再試`;
+            let errorMsg = '';
+            if (data.error) {
+                errorMsg = data.error + (data.detail ? `: ${data.detail}` : '');
+            } else {
+                errorMsg = JSON.stringify(data);
+            }
+            verseElement.innerHTML = `${t('parseError')}<br>${errorMsg}<br><pre style="white-space:pre-wrap;text-align:left;max-width:600px;margin:10px auto;background:#f8f8f8;padding:8px;border-radius:6px;">${responseText}</pre>`;
         }
     } catch (error) {
         console.error('錯誤：', error);
         clearInterval(countdownInterval);
+        // 移除 loading 區塊並渲染所有段落
         renderPrayerSegments();
         const verseElement = document.getElementById('verse');
         verseElement.classList.remove('loading-verse');
-        verseElement.innerHTML =
-            t('errorGettingVerse') + '<br>' + (error && error.message ? error.message : '');
+        verseElement.innerHTML = t('errorGettingVerse') + '<br>' + (error && error.message ? error.message : '');
     }
-}
+    }
 
-
-    
 
 /**
  * 渲染所有禱告段落
@@ -1279,7 +1425,6 @@ function renderPrayerSegments(scripture, explanation) {
         `;
     });
     verseElement.innerHTML = html;
-    
 }
 
 /**
@@ -1320,37 +1465,11 @@ function renderPrayerLoading() {
         `;
     });
     verseElement.innerHTML = html;
-
-     prayerSegments.forEach((seg, idx) => {
-    const select = document.getElementById(`voice-selector-${idx}`);
-    if (select) {
-      select.onchange = () => {
-        playPrayerSegment(idx);
-      };
-    }
-  });
 }
 
 /**
  * 播放指定段落的禱告詞
  */
-// 新增：根據語言選擇合適的 OpenAI 語音
-function getVoiceForLanguage(language) {
-    const voiceMapping = {
-        'zh-Hant': 'alloy',
-        'zh-Hans': 'alloy', 
-        'en': 'nova',
-        'ja': 'shimmer',
-        'ko': 'echo',
-        'de': 'onyx',
-        'fr': 'fable',
-        'it': 'alloy',
-        'nl': 'nova',
-        'es': 'shimmer'
-    };
-    return voiceMapping[language] || 'alloy';
-}
-
 async function playPrayerSegment(idx) {
     const seg = prayerSegments[idx];
     const button = document.getElementById(`play-button-${idx}`);
@@ -1362,36 +1481,25 @@ async function playPrayerSegment(idx) {
         playText.style.display = 'none';
         spinner.style.display = 'inline';
 
-        // 使用用戶選擇的語音，如果沒有選擇則使用語言對應的預設語音
-        const voiceToUse = selectedTTSVoice || getVoiceForLanguage(currentLanguage);
-
-        // 呼叫 OpenAI TTS API
-        const ttsRes = await fetch('/api/openai-tts', {
+        // 呼叫 Google TTS API
+        const ttsRes = await fetch('/api/google-tts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 text: seg.text,
-                voice: voiceToUse,
-                model: 'tts-1',
-                speed: 1.0
+                languageCode: 'zh-TW' // 可根據 currentLanguage 調整
             })
         });
-
         const ttsData = await ttsRes.json();
         if (!ttsRes.ok || !ttsData.audioContent) {
-            throw new Error(ttsData.error || 'OpenAI TTS 產生語音失敗');
+            throw new Error(ttsData.error || 'Google TTS 產生語音失敗');
         }
-
         // 播放 base64 mp3
         const audioElement = document.getElementById(`prayer-audio-${idx}`);
         audioElement.src = `data:audio/mp3;base64,${ttsData.audioContent}`;
         audioElement.style.display = 'block';
         audioElement.load();
         audioElement.play();
-
-        // 記錄音頻生成
-        await recordAudioGeneration(currentLanguage);
-
     } catch (error) {
         console.error('播放失敗:', error);
         alert(`${t('audioPlayError')}` + (error && error.message ? ('\n' + error.message) : ''));
@@ -1403,197 +1511,195 @@ async function playPrayerSegment(idx) {
 }
 // OpenAI TTS 語音選項（多語言）
 const openAIVoices = {
-  alloy: {
-    'zh-Hant': '🎙️ 平衡 (Alloy)',
-    'zh-Hans': '🎙️ 平衡 (Alloy)',
-    'en': '🎙️ Balanced (Alloy)',
-    'ja': '🎙️ バランス (Alloy)',
-    'ko': '🎙️ 균형 (Alloy)',
-    'de': '🎙️ Ausgewogen (Alloy)',
-    'fr': '🎙️ Équilibré (Alloy)',
-    'it': '🎙️ Equilibrato (Alloy)',
-    'nl': '🎙️ Gebalanceerd (Alloy)',
-    'es': '🎙️ Equilibrado (Alloy)'
-  },
-  echo: {
-    'zh-Hant': '🎭 活潑 (Echo)',
-    'zh-Hans': '🎭 活泼 (Echo)',
-    'en': '🎭 Dynamic (Echo)',
-    'ja': '🎭 ダイナミック (Echo)',
-    'ko': '🎭 역동적 (Echo)',
-    'de': '🎭 Dynamisch (Echo)',
-    'fr': '🎭 Dynamique (Echo)',
-    'it': '🎭 Dinamico (Echo)',
-    'nl': '🎭 Dynamisch (Echo)',
-    'es': '🎭 Dinámico (Echo)'
-  },
-  fable: {
-    'zh-Hant': '📖 故事感 (Fable)',
-    'zh-Hans': '📖 故事感 (Fable)',
-    'en': '📖 Storytelling (Fable)',
-    'ja': '📖 ストーリーテリング (Fable)',
-    'ko': '📖 스토리텔링 (Fable)',
-    'de': '📖 Erzählend (Fable)',
-    'fr': '📖 Narratif (Fable)',
-    'it': '📖 Narrativo (Fable)',
-    'nl': '📖 Verhalend (Fable)',
-    'es': '📖 Narrativo (Fable)'
-  },
-  onyx: {
-    'zh-Hant': '🎤 低沉 (Onyx)',
-    'zh-Hans': '🎤 低沉 (Onyx)',
-    'en': '🎤 Deep (Onyx)',
-    'ja': '🎤 深い (Onyx)',
-    'ko': '🎤 깊은 (Onyx)',
-    'de': '🎤 Tief (Onyx)',
-    'fr': '🎤 Profond (Onyx)',
-    'it': '🎤 Profondo (Onyx)',
-    'nl': '🎤 Diep (Onyx)',
-    'es': '🎤 Profundo (Onyx)'
-  },
-  nova: {
-    'zh-Hant': '✨ 明亮 (Nova)',
-    'zh-Hans': '✨ 明亮 (Nova)',
-    'en': '✨ Bright (Nova)',
-    'ja': '✨ 明るい (Nova)',
-    'ko': '✨ 밝은 (Nova)',
-    'de': '✨ Hell (Nova)',
-    'fr': '✨ Brillant (Nova)',
-    'it': '✨ Brillante (Nova)',
-    'nl': '✨ Helder (Nova)',
-    'es': '✨ Brillante (Nova)'
-  },
-  shimmer: {
-    'zh-Hant': '🌟 溫柔 (Shimmer)',
-    'zh-Hans': '🌟 温柔 (Shimmer)',
-    'en': '🌟 Gentle (Shimmer)',
-    'ja': '🌟 優しい (Shimmer)',
-    'ko': '🌟 부드러운 (Shimmer)',
-    'de': '🌟 Sanft (Shimmer)',
-    'fr': '🌟 Doux (Shimmer)',
-    'it': '🌟 Gentile (Shimmer)',
-    'nl': '🌟 Zacht (Shimmer)',
-    'es': '🌟 Suave (Shimmer)'
+    alloy: {
+      'zh-Hant': '🎙️ 平衡 (Alloy)',
+      'zh-Hans': '🎙️ 平衡 (Alloy)',
+      'en': '🎙️ Balanced (Alloy)',
+      'ja': '🎙️ バランス (Alloy)',
+      'ko': '🎙️ 균형 (Alloy)',
+      'de': '🎙️ Ausgewogen (Alloy)',
+      'fr': '🎙️ Équilibré (Alloy)',
+      'it': '🎙️ Equilibrato (Alloy)',
+      'nl': '🎙️ Gebalanceerd (Alloy)',
+      'es': '🎙️ Equilibrado (Alloy)'
+    },
+    echo: {
+      'zh-Hant': '🎭 活潑 (Echo)',
+      'zh-Hans': '🎭 活泼 (Echo)',
+      'en': '🎭 Dynamic (Echo)',
+      'ja': '🎭 ダイナミック (Echo)',
+      'ko': '🎭 역동적 (Echo)',
+      'de': '🎭 Dynamisch (Echo)',
+      'fr': '🎭 Dynamique (Echo)',
+      'it': '🎭 Dinamico (Echo)',
+      'nl': '🎭 Dynamisch (Echo)',
+      'es': '🎭 Dinámico (Echo)'
+    },
+    fable: {
+      'zh-Hant': '📖 故事感 (Fable)',
+      'zh-Hans': '📖 故事感 (Fable)',
+      'en': '📖 Storytelling (Fable)',
+      'ja': '📖 ストーリーテリング (Fable)',
+      'ko': '📖 스토리텔링 (Fable)',
+      'de': '📖 Erzählend (Fable)',
+      'fr': '📖 Narratif (Fable)',
+      'it': '📖 Narrativo (Fable)',
+      'nl': '📖 Verhalend (Fable)',
+      'es': '📖 Narrativo (Fable)'
+    },
+    onyx: {
+      'zh-Hant': '🎤 低沉 (Onyx)',
+      'zh-Hans': '🎤 低沉 (Onyx)',
+      'en': '🎤 Deep (Onyx)',
+      'ja': '🎤 深い (Onyx)',
+      'ko': '🎤 깊은 (Onyx)',
+      'de': '🎤 Tief (Onyx)',
+      'fr': '🎤 Profond (Onyx)',
+      'it': '🎤 Profondo (Onyx)',
+      'nl': '🎤 Diep (Onyx)',
+      'es': '🎤 Profundo (Onyx)'
+    },
+    nova: {
+      'zh-Hant': '✨ 明亮 (Nova)',
+      'zh-Hans': '✨ 明亮 (Nova)',
+      'en': '✨ Bright (Nova)',
+      'ja': '✨ 明るい (Nova)',
+      'ko': '✨ 밝은 (Nova)',
+      'de': '✨ Hell (Nova)',
+      'fr': '✨ Brillant (Nova)',
+      'it': '✨ Brillante (Nova)',
+      'nl': '✨ Helder (Nova)',
+      'es': '✨ Brillante (Nova)'
+    },
+    shimmer: {
+      'zh-Hant': '🌟 溫柔 (Shimmer)',
+      'zh-Hans': '🌟 温柔 (Shimmer)',
+      'en': '🌟 Gentle (Shimmer)',
+      'ja': '🌟 優しい (Shimmer)',
+      'ko': '🌟 부드러운 (Shimmer)',
+      'de': '🌟 Sanft (Shimmer)',
+      'fr': '🌟 Doux (Shimmer)',
+      'it': '🌟 Gentile (Shimmer)',
+      'nl': '🌟 Zacht (Shimmer)',
+      'es': '🌟 Suave (Shimmer)'
+    }
+  };
+  async function playPrayerSegment(idx) {
+    const seg = prayerSegments[idx];
+    const button = document.getElementById(`play-button-${idx}`);
+    const spinner = document.getElementById(`loading-spinner-${idx}`);
+    const playText = document.getElementById(`play-text-${idx}`);
+    const voiceSelect = document.getElementById(`voice-selector-${idx}`);
+    const audioElement = document.getElementById(`prayer-audio-${idx}`);
+  
+    try {
+      button.disabled = true;
+      playText.style.display = 'none';
+      spinner.style.display = 'inline';
+  
+      // 讀取該段選擇的語音
+      const selectedVoice = voiceSelect ? voiceSelect.value : 'alloy';
+  
+      // 呼叫 OpenAI TTS API，取得 base64 音頻
+      const response = await fetch('/api/openai-tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: seg.text,
+          voice: selectedVoice,
+          model: 'tts-1',
+          speed: 1.0
+        })
+      });
+  
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || `HTTP error! ${response.status}`);
+      }
+  
+      const data = await response.json();
+  
+      if (!data.audioContent) {
+        throw new Error('沒有收到 audioContent');
+      }
+  
+      // 設置 <audio> 播放
+      audioElement.src = `data:audio/mp3;base64,${data.audioContent}`;
+      audioElement.style.display = 'block';
+      audioElement.load();
+      await audioElement.play();
+  
+      // 你現有的錄音計數呼叫
+      if (typeof recordAudioGeneration === 'function') {
+        await recordAudioGeneration(currentLanguage);
+      }
+  
+    } catch (error) {
+      console.error('播放失敗:', error);
+      alert('語音播放失敗: ' + (error.message || error));
+    } finally {
+      button.disabled = false;
+      playText.style.display = 'inline';
+      spinner.style.display = 'none';
+    }
   }
-};
-async function playPrayerSegment(idx) {
-  const seg = prayerSegments[idx];
-  const button = document.getElementById(`play-button-${idx}`);
-  const spinner = document.getElementById(`loading-spinner-${idx}`);
-  const playText = document.getElementById(`play-text-${idx}`);
-  const voiceSelect = document.getElementById(`voice-selector-${idx}`);
-  const audioElement = document.getElementById(`prayer-audio-${idx}`);
-
-  try {
-    button.disabled = true;
-    playText.style.display = 'none';
-    spinner.style.display = 'inline';
-
-    // 讀取該段選擇的語音
-    const selectedVoice = voiceSelect ? voiceSelect.value : 'alloy';
-
-    // 呼叫 OpenAI TTS API，取得 base64 音頻
-    const response = await fetch('/api/openai-tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: seg.text,
-        voice: selectedVoice,
-        model: 'tts-1',
-        speed: 1.0
-      })
+  
+  
+  // 用戶語音選擇變數
+  let selectedTTSVoice = 'alloy';
+  
+  // 更新語音選項函式
+  function updateTTSVoiceOptions(lang) {
+    const voiceSelect = document.getElementById('ttsVoiceSelect');
+    if (!voiceSelect) return;
+    voiceSelect.innerHTML = '';
+    Object.keys(openAIVoices).forEach(voice => {
+      const option = document.createElement('option');
+      option.value = voice;
+      option.textContent = openAIVoices[voice][lang] || openAIVoices[voice]['zh-Hant'];
+      if (voice === selectedTTSVoice) option.selected = true;
+      voiceSelect.appendChild(option);
     });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(errText || `HTTP error! ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (!data.audioContent) {
-      throw new Error('沒有收到 audioContent');
-    }
-
-    // 設置 <audio> 播放
-    audioElement.src = `data:audio/mp3;base64,${data.audioContent}`;
-    audioElement.style.display = 'block';
-    audioElement.load();
-    await audioElement.play();
-
-    // 你現有的錄音計數呼叫
-    if (typeof recordAudioGeneration === 'function') {
-      await recordAudioGeneration(currentLanguage);
-    }
-
-  } catch (error) {
-    console.error('播放失敗:', error);
-    alert('語音播放失敗: ' + (error.message || error));
-  } finally {
-    button.disabled = false;
-    playText.style.display = 'inline';
-    spinner.style.display = 'none';
   }
-}
-
-
-// 用戶語音選擇變數
-let selectedTTSVoice = 'alloy';
-
-// 更新語音選項函式
-function updateTTSVoiceOptions(lang) {
-  const voiceSelect = document.getElementById('ttsVoiceSelect');
-  if (!voiceSelect) return;
-  voiceSelect.innerHTML = '';
-  Object.keys(openAIVoices).forEach(voice => {
-    const option = document.createElement('option');
-    option.value = voice;
-    option.textContent = openAIVoices[voice][lang] || openAIVoices[voice]['zh-Hant'];
-    if (voice === selectedTTSVoice) option.selected = true;
-    voiceSelect.appendChild(option);
-  });
-}
-
-
-
-
-// OpenAI TTS 播放函式
-async function playOpenAITTS(text, userVoice) {
-  const voiceToUse = userVoice || selectedTTSVoice || getVoiceForLanguage(currentLanguage);
-  try {
-    const response = await fetch('/api/openai-tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text,
-        voice: voiceToUse,
-        model: 'tts-1',
-        speed: 1.0
-      })
-    });
-
-    if (!response.ok) {
-      let errorText = await response.text();
-      throw new Error(errorText || `HTTP error! status: ${response.status}`);
+  
+  
+  
+  
+  // OpenAI TTS 播放函式
+  async function playOpenAITTS(text, userVoice) {
+    const voiceToUse = userVoice || selectedTTSVoice || getVoiceForLanguage(currentLanguage);
+    try {
+      const response = await fetch('/api/openai-tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          voice: voiceToUse,
+          model: 'tts-1',
+          speed: 1.0
+        })
+      });
+  
+      if (!response.ok) {
+        let errorText = await response.text();
+        throw new Error(errorText || `HTTP error! status: ${response.status}`);
+      }
+  
+  
+  
+      const data = await response.json();
+      if (data.audioContent) {
+        const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
+        audio.play();
+        await recordAudioGeneration(currentLanguage); // 你的統計
+      } else {
+        throw new Error('No audio content received');
+      }
+    } catch (error) {
+      console.error('OpenAI TTS 播放失敗:', error);
+      alert('語音播放失敗: ' + error.message);
     }
-
-
-
-    const data = await response.json();
-    if (data.audioContent) {
-      const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
-      audio.play();
-      await recordAudioGeneration(currentLanguage); // 你的統計
-    } else {
-      throw new Error('No audio content received');
-    }
-  } catch (error) {
-    console.error('OpenAI TTS 播放失敗:', error);
-    alert('語音播放失敗: ' + error.message);
   }
-}
-
-
 
 // 修改playPrayer函數
 async function playPrayer(encodedText, encodedInstructions = '') {
@@ -1634,7 +1740,6 @@ async function playPrayer(encodedText, encodedInstructions = '') {
         spinner.style.display = 'none';
     }
 }
-//
 
 // 檢查API端點是否可用，如果不可用，則禁用計數器功能
 async function checkCounterEndpoint() {
@@ -1691,5 +1796,67 @@ window.playPrayer = playPrayer;
 window.toggleMusic = toggleMusic;
 window.stopMusic = stopMusic;
 window.initBackgroundMusic = initBackgroundMusic;
+
+// 響應式處理函數
+function handleResize() {
+    const musicContainer = document.getElementById('musicControls');
+    if (musicContainer) {
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile) {
+            // 手機樣式
+            musicContainer.style.cssText = `
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 10px;
+                padding: 12px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                margin-top: 10px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                min-width: 180px;
+                max-width: 280px;
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 1000;
+            `;
+        } else {
+            // 桌面樣式
+            musicContainer.style.cssText = `
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 10px;
+                padding: 15px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                margin-top: 10px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                min-width: 200px;
+                max-width: 300px;
+                position: static;
+            `;
+        }
+    }
+}
+
+// 監聽視窗大小改變
+window.addEventListener('resize', handleResize);
+
+// 初始化時檢查一次
+document.addEventListener('DOMContentLoaded', function() {
+    // 延遲初始化，確保頁面完全載入
+    const musicControls = createMusicControls();
+    if (musicControls) {
+        document.body.appendChild(musicControls);
+    }
+    updateAllLabelsForLanguage(currentLanguage);
+    setTimeout(initBackgroundMusic, 1000);
+});
+
+// 讓主要互動函數可被全域呼叫
+window.showPreviousEmotions = showPreviousEmotions;
+window.submitCustomEmotion = submitCustomEmotion;
+window.resetEmotionSelection = resetEmotionSelection;
 
 

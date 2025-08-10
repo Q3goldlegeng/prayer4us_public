@@ -14,6 +14,7 @@ body {
     background-attachment: fixed;
     position: relative;
 }
+
 h1 {
     color: #3a506b;
     margin-top: 40px;
@@ -362,47 +363,397 @@ button[style*="background-color: #2196F3"]:hover {
     min-height: 200px !important;
 }
 
-/* 響應式設計 */
+/* 音樂控制器樣式 */
+#musicControls {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+/* 響應式設計 - 平板 */
+@media (max-width: 1024px) {
+    body {
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        margin-top: 35px;
+    }
+
+    #buttons {
+        padding: 18px;
+        width: 95%;
+    }
+
+    button {
+        padding: 13px 25px;
+        font-size: 15px;
+        margin: 8px;
+        min-width: 110px;
+    }
+
+    #verse {
+        padding: 25px;
+        margin: 25px auto;
+        width: 95%;
+    }
+
+    #verse p {
+        padding: 14px 20px;
+    }
+
+    #verse::before,
+    #verse::after {
+        font-size: 80px;
+    }
+
+    #verse p:nth-of-type(1)::before,
+    #verse p:nth-of-type(2)::before,
+    #verse p:nth-of-type(3)::before {
+        font-size: 18px;
+        left: -25px;
+    }
+}
+
+/* 響應式設計 - 手機 */
 @media (max-width: 768px) {
     body {
         padding: 10px;
     }
 
     h1 {
-        font-size: 2rem;
-        margin-top: 30px;
+        font-size: 1.8rem;
+        margin-top: 25px;
+        margin-bottom: 20px;
+        padding: 8px 15px;
     }
 
     #buttons {
         padding: 15px;
-        width: 90%;
+        width: 95%;
+        margin: 10px auto;
     }
 
     button {
         padding: 12px 20px;
         font-size: 14px;
         margin: 6px;
+        min-width: 100px;
+        border-radius: 25px;
     }
 
     #verse {
-        padding: 20px;
-        margin: 20px auto;
-        width: 90%;
+        padding: 20px 15px;
+        margin: 15px auto;
+        width: 95%;
+        border-radius: 12px;
     }
 
     #verse p {
         padding: 12px 15px;
+        margin: 15px 0;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    #verse h3 {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+    }
+
+    #verse::before,
+    #verse::after {
+        font-size: 60px;
+        top: -20px;
+        left: 15px;
+    }
+
+    #verse::after {
+        bottom: -50px;
+        right: 15px;
+    }
+
+    #verse p:nth-of-type(1)::before,
+    #verse p:nth-of-type(2)::before,
+    #verse p:nth-of-type(3)::before {
+        font-size: 16px;
+        left: -20px;
     }
 
     #languageContainer {
         top: 10px;
         right: 10px;
+        padding: 6px 12px;
+        border-radius: 25px;
+    }
+
+    #languageSelector {
+        padding: 6px 10px;
+        font-size: 12px;
+        border-radius: 18px;
+    }
+
+    #customEmotionInput {
+        min-height: 100px;
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    #prayer-audio {
+        padding: 12px;
+    }
+
+    #audio-player {
+        padding: 12px;
+        margin: 15px 0;
+    }
+
+    #voice-selector {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+
+    #musicControls {
+        padding: 12px;
+        min-width: 180px;
+        max-width: 280px;
+    }
+
+    #titleBox {
+        margin: 25px auto 0 auto;
+        padding: 20px 0 12px 0;
+        border-radius: 12px;
+    }
+
+    #mainTitle {
+        font-size: 1.8rem;
+        padding: 0 15px;
+    }
+}
+
+/* 響應式設計 - 小手機 */
+@media (max-width: 480px) {
+    body {
+        padding: 8px;
+    }
+
+    h1 {
+        font-size: 1.6rem;
+        margin-top: 20px;
+        margin-bottom: 15px;
+        padding: 6px 12px;
+    }
+
+    #buttons {
+        padding: 12px;
+        width: 98%;
+        margin: 8px auto;
+    }
+
+    button {
+        padding: 10px 16px;
+        font-size: 13px;
+        margin: 4px;
+        min-width: 90px;
+        border-radius: 20px;
+    }
+
+    #verse {
+        padding: 15px 12px;
+        margin: 12px auto;
+        width: 98%;
+        border-radius: 10px;
+    }
+
+    #verse p {
+        padding: 10px 12px;
+        margin: 12px 0;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    #verse h3 {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+    }
+
+    #verse::before,
+    #verse::after {
+        font-size: 50px;
+        top: -15px;
+        left: 12px;
+    }
+
+    #verse::after {
+        bottom: -40px;
+        right: 12px;
+    }
+
+    #verse p:nth-of-type(1)::before,
+    #verse p:nth-of-type(2)::before,
+    #verse p:nth-of-type(3)::before {
+        font-size: 14px;
+        left: -18px;
+    }
+
+    #languageContainer {
+        top: 8px;
+        right: 8px;
         padding: 5px 10px;
+        border-radius: 20px;
     }
 
     #languageSelector {
         padding: 5px 8px;
+        font-size: 11px;
+        border-radius: 15px;
+    }
+
+    #customEmotionInput {
+        min-height: 80px;
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    #prayer-audio {
+        padding: 10px;
+    }
+
+    #audio-player {
+        padding: 10px;
+        margin: 12px 0;
+    }
+
+    #voice-selector {
+        padding: 5px 8px;
         font-size: 12px;
+    }
+
+    #musicControls {
+        padding: 10px;
+        min-width: 160px;
+        max-width: 250px;
+    }
+
+    #titleBox {
+        margin: 20px auto 0 auto;
+        padding: 16px 0 10px 0;
+        border-radius: 10px;
+    }
+
+    #mainTitle {
+        font-size: 1.6rem;
+        padding: 0 12px;
+    }
+
+    /* 隱藏裝飾性元素在小螢幕上 */
+    #verse::before,
+    #verse::after {
+        display: none;
+    }
+
+    #verse p:nth-of-type(1)::before,
+    #verse p:nth-of-type(2)::before,
+    #verse p:nth-of-type(3)::before {
+        display: none;
+    }
+}
+
+/* 響應式設計 - 超小手機 */
+@media (max-width: 360px) {
+    h1 {
+        font-size: 1.4rem;
+        margin-top: 15px;
+        margin-bottom: 12px;
+        padding: 5px 10px;
+    }
+
+    #buttons {
+        padding: 10px;
+        width: 99%;
+        margin: 6px auto;
+    }
+
+    button {
+        padding: 8px 14px;
+        font-size: 12px;
+        margin: 3px;
+        min-width: 80px;
+        border-radius: 18px;
+    }
+
+    #verse {
+        padding: 12px 10px;
+        margin: 10px auto;
+        width: 99%;
+    }
+
+    #verse p {
+        padding: 8px 10px;
+        margin: 10px 0;
+        font-size: 12px;
+        line-height: 1.3;
+    }
+
+    #verse h3 {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+    }
+
+    #titleBox {
+        margin: 15px auto 0 auto;
+        padding: 14px 0 8px 0;
+    }
+
+    #mainTitle {
+        font-size: 1.4rem;
+        padding: 0 10px;
+    }
+}
+
+/* 橫向手機模式 */
+@media (max-height: 500px) and (orientation: landscape) {
+    body {
+        padding: 5px;
+    }
+
+    h1 {
+        font-size: 1.4rem;
+        margin-top: 15px;
+        margin-bottom: 10px;
+    }
+
+    #buttons {
+        padding: 10px;
+        margin: 5px auto;
+    }
+
+    button {
+        padding: 8px 16px;
+        font-size: 12px;
+        margin: 4px;
+    }
+
+    #verse {
+        padding: 15px;
+        margin: 10px auto;
+    }
+
+    #titleBox {
+        margin: 15px auto 0 auto;
+        padding: 12px 0 8px 0;
+    }
+
+    #mainTitle {
+        font-size: 1.4rem;
     }
 }
 
@@ -500,9 +851,11 @@ button[style*="background-color: #2196F3"]:hover {
   transition: background 0.2s;
   white-space: nowrap;
 }
+
 .emotion-float-btn:hover {
   background: #e0f0ff;
 }
+
 #emotionLabels {
   position: absolute;
   top: 0; left: 0;
@@ -519,6 +872,7 @@ button[style*="background-color: #2196F3"]:hover {
   padding: 24px 0 16px 0;
   text-align: center;
 }
+
 #mainTitle {
   color: #3a506b;
   font-size: 2.5rem;
@@ -531,5 +885,32 @@ button[style*="background-color: #2196F3"]:hover {
   -webkit-text-fill-color: transparent;
   padding: 0 20px;
   border-radius: 10px;
+}
+
+/* 觸控優化 */
+@media (hover: none) and (pointer: coarse) {
+    button {
+        min-height: 44px; /* 確保觸控目標足夠大 */
+    }
+    
+    #customEmotionInput {
+        min-height: 44px;
+    }
+    
+    #languageSelector,
+    #voice-selector {
+        min-height: 44px;
+    }
+    
+    /* 移除hover效果，改為active效果 */
+    button:hover {
+        transform: none;
+        box-shadow: 0 4px 15px rgba(106, 133, 182, 0.4);
+    }
+    
+    button:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 10px rgba(106, 133, 182, 0.4);
+    }
 }
 

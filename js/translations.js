@@ -374,15 +374,31 @@ function updatePageLanguage() {
     
     // Update voice selector if it exists
     updateVoiceSelector();
-    //c3
-    updateMusicButton();
-  updateMusicTypeOptions(currentLanguage);
-   updateMusicTitle(currentLanguage);
-    updateMusicTypeLabel(currentLanguage);
-    updateVolumeLabel(currentLanguage);
-    updatePlayPauseButton(currentLanguage);
-    updateTTSVoiceOptions(currentLanguage);
-    updateMusicControlsLanguage(currentLanguage);
+    // 檢查並調用音樂相關函數（如果存在）
+    if (typeof updateMusicButton === 'function') {
+        updateMusicButton();
+    }
+    if (typeof updateMusicTypeOptions === 'function') {
+        updateMusicTypeOptions(currentLanguage);
+    }
+    if (typeof updateMusicTitle === 'function') {
+        updateMusicTitle(currentLanguage);
+    }
+    if (typeof updateMusicTypeLabel === 'function') {
+        updateMusicTypeLabel(currentLanguage);
+    }
+    if (typeof updateVolumeLabel === 'function') {
+        updateVolumeLabel(currentLanguage);
+    }
+    if (typeof updatePlayPauseButton === 'function') {
+        updatePlayPauseButton(currentLanguage);
+    }
+    if (typeof updateTTSVoiceOptions === 'function') {
+        updateTTSVoiceOptions(currentLanguage);
+    }
+    if (typeof updateMusicControlsLanguage === 'function') {
+        updateMusicControlsLanguage(currentLanguage);
+    }
 }
 
 // Update emotion buttons with translated text

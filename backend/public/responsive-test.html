@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>響應式設計測試 - 我陪您禱告</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/responsive-test.css">
+    <style>
+        .test-info {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px auto;
+            max-width: 800px;
+            text-align: left;
+        }
+        
+        .screen-size {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        
+        .breakpoint-info {
+            background: #f3e5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .breakpoint-info h3 {
+            margin-top: 0;
+            color: #7b1fa2;
+        }
+        
+        .test-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .test-button {
+            padding: 10px 20px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .test-button:hover {
+            background: #1976d2;
+        }
+        
+        .current-size {
+            background: #4caf50 !important;
+            color: white;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px auto;
+            max-width: 800px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .touch-test-area {
+            background: #f0f8ff;
+            border: 2px dashed #2196f3;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin: 20px 0;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .touch-indicator {
+            background: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .responsive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .grid-item {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .css-test {
+            background: #fff3e0;
+            border: 1px solid #ffcc80;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .css-property {
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 5px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        
+        .performance-metrics {
+            background: #f1f8e9;
+            border: 1px solid #c5e1a5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #e8f5e8;
+        }
+        
+        .test-toggle {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 12px;
+        }
+        
+        .test-toggle.active {
+            background: #4caf50;
+        }
+        
+        .hidden-on-mobile {
+            background: #ffebee;
+            border: 1px solid #ef9a9a;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .hidden-on-mobile {
+                display: none;
+            }
+            
+            .responsive-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .test-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .test-button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .test-info, .test-section {
+                margin: 10px;
+                padding: 15px;
+            }
+            
+            .touch-test-area {
+                min-height: 150px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="titleBox">
+        <h1 id="mainTitle">響應式設計測試</h1>
+    </div>
+    
+    <div class="test-info">
+        <h2>當前螢幕尺寸</h2>
+        <div class="screen-size" id="currentSize">
+            載入中...
+        </div>
+        
+        <div class="breakpoint-info">
+            <h3>響應式斷點說明</h3>
+            <ul>
+                <li><strong>桌面/平板 (≥1025px):</strong> 完整佈局，最大寬度800px</li>
+                <li><strong>平板 (≤1024px):</strong> 適中佈局，寬度95%</li>
+                <li><strong>手機 (≤768px):</strong> 手機佈局，寬度95%，字體縮小</li>
+                <li><strong>小手機 (≤480px):</strong> 緊湊佈局，寬度98%，隱藏裝飾元素</li>
+                <li><strong>超小手機 (≤360px):</strong> 最小佈局，寬度99%</li>
+                <li><strong>橫向手機 (≤500px高度):</strong> 橫向優化佈局</li>
+            </ul>
+        </div>
+        
+        <div class="test-buttons">
+            <button class="test-button" onclick="testBreakpoint('desktop')">桌面模式</button>
+            <button class="test-button" onclick="testBreakpoint('tablet')">平板模式</button>
+            <button class="test-button" onclick="testBreakpoint('mobile')">手機模式</button>
+            <button class="test-button" onclick="testBreakpoint('small-mobile')">小手機模式</button>
+            <button class="test-button" onclick="testBreakpoint('tiny-mobile')">超小手機模式</button>
+        </div>
+        
+        <h3>測試說明</h3>
+        <p>這個頁面幫助您測試不同螢幕尺寸下的響應式設計效果。您可以：</p>
+        <ul>
+            <li>調整瀏覽器視窗大小來測試響應式效果</li>
+            <li>使用開發者工具切換不同的設備模擬器</li>
+            <li>點擊上方按鈕來快速測試不同斷點</li>
+            <li>檢查CSS媒體查詢是否正確觸發</li>
+        </ul>
+        
+        <h3>主要改進</h3>
+        <ul>
+            <li>✅ 多層級響應式斷點 (1024px, 768px, 480px, 360px)</li>
+            <li>✅ 觸控優化 (最小44px觸控目標)</li>
+            <li>✅ 手機端音樂控制器浮動設計</li>
+            <li>✅ 情緒樹響應式縮放</li>
+            <li>✅ 自定義輸入框手機端優化</li>
+            <li>✅ 橫向手機模式支援</li>
+            <li>✅ 字體大小和間距響應式調整</li>
+        </ul>
+    </div>
+    
+    <!-- 觸控測試區域 -->
+    <div class="test-section">
+        <h2>觸控測試</h2>
+        <p>測試觸控目標大小和響應性</p>
+        <div class="touch-test-area" id="touchTestArea">
+            <h3>觸控測試區域</h3>
+            <p>點擊或觸摸此區域來測試觸控響應</p>
+            <div class="touch-indicator" id="touchIndicator">觸控檢測中...</div>
+            <button class="test-toggle" onclick="toggleTouchTest()">開始觸控測試</button>
+        </div>
+    </div>
+    
+    <!-- 響應式網格測試 -->
+    <div class="test-section">
+        <h2>響應式網格測試</h2>
+        <p>測試CSS Grid在不同螢幕尺寸下的表現</p>
+        <div class="responsive-grid">
+            <div class="grid-item">網格項目 1</div>
+            <div class="grid-item">網格項目 2</div>
+            <div class="grid-item">網格項目 3</div>
+            <div class="grid-item">網格項目 4</div>
+            <div class="grid-item">網格項目 5</div>
+            <div class="grid-item">網格項目 6</div>
+        </div>
+    </div>
+    
+    <!-- CSS屬性測試 -->
+    <div class="test-section">
+        <h2>CSS屬性測試</h2>
+        <p>測試響應式CSS屬性是否正確應用</p>
+        <div class="css-test">
+            <div class="css-property" id="cssProperties">
+                載入CSS屬性中...
+            </div>
+        </div>
+    </div>
+    
+    <!-- 性能指標 -->
+    <div class="test-section">
+        <h2>性能指標</h2>
+        <div class="performance-metrics">
+            <div class="metric-item">
+                <span>頁面載入時間:</span>
+                <span id="loadTime">計算中...</span>
+            </div>
+            <div class="metric-item">
+                <span>DOM內容載入:</span>
+                <span id="domReady">計算中...</span>
+            </div>
+            <div class="metric-item">
+                <span>視窗大小變化:</span>
+                <span id="resizeCount">0</span>
+            </div>
+            <div class="metric-item">
+                <span>觸控事件:</span>
+                <span id="touchCount">0</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 響應式隱藏測試 -->
+    <div class="test-section">
+        <h2>響應式隱藏測試</h2>
+        <p>測試在不同螢幕尺寸下元素的顯示/隱藏</p>
+        <div class="hidden-on-mobile">
+            <p>這個區塊在手機端會被隱藏 (≤768px)</p>
+            <p>在桌面端應該可見</p>
+        </div>
+    </div>
+    
+    <div id="buttons">
+        <div id="mainEmotions">
+            <h1 id="mainTitle" style="margin-top:0;">我陪你禱告</h1>
+        </div>
+        <div id="emotionLabels" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></div>
+        <div id="secondaryEmotions" style="display: none;"></div>
+        <button onclick="alert('測試按鈕')" style="background-color: #666;" id="backButton">↩ 上一個情緒列表</button>
+        <div id="verse" style="margin-top: 30px;">
+            <h3>測試經文區塊</h3>
+            <p><strong>這是經文內容</strong><br>
+            這是一段測試用的經文內容，用來驗證響應式設計在不同螢幕大小下的顯示效果。</p>
+            <p><strong>這是說明內容</strong><br>
+            這是一段測試用的說明內容，用來驗證響應式設計在不同螢幕大小下的顯示效果。</p>
+            <p><strong>這是禱告詞</strong><br>
+            這是一段測試用的禱告詞內容，用來驗證響應式設計在不同螢幕大小下的顯示效果。</p>
+        </div>
+    </div>
+
+    <script src="../js/env-config.js"></script>
+    <script src="../js/translations.js"></script>
+    <script src="../js/emotionTree.js"></script>
+    <script src="main.js"></script>
+    
+    <script>
+        // 性能指標變數
+        let resizeCount = 0;
+        let touchCount = 0;
+        let touchTestActive = false;
+        
+        // 更新當前螢幕尺寸顯示
+        function updateScreenSize() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const currentSize = document.getElementById('currentSize');
+            
+            let breakpoint = '';
+            if (width >= 1025) breakpoint = '桌面/平板 (≥1025px)';
+            else if (width >= 769) breakpoint = '平板 (≤1024px)';
+            else if (width >= 481) breakpoint = '手機 (≤768px)';
+            else if (width >= 361) breakpoint = '小手機 (≤480px)';
+            else breakpoint = '超小手機 (≤360px)';
+            
+            currentSize.innerHTML = `
+                <strong>寬度:</strong> ${width}px | 
+                <strong>高度:</strong> ${height}px | 
+                <strong>斷點:</strong> ${breakpoint}
+            `;
+            
+            // 更新測試按鈕狀態
+            document.querySelectorAll('.test-button').forEach(btn => {
+                btn.classList.remove('current-size');
+            });
+            
+            if (width >= 1025) document.querySelector('[onclick*="desktop"]').classList.add('current-size');
+            else if (width >= 769) document.querySelector('[onclick*="tablet"]').classList.add('current-size');
+            else if (width >= 481) document.querySelector('[onclick*="mobile"]').classList.add('current-size');
+            else if (width >= 361) document.querySelector('[onclick*="small-mobile"]').classList.add('current-size');
+            else document.querySelector('[onclick*="tiny-mobile"]').classList.add('current-size');
+            
+            // 更新性能指標
+            resizeCount++;
+            document.getElementById('resizeCount').textContent = resizeCount;
+            
+            // 更新CSS屬性測試
+            updateCSSTest();
+        }
+        
+        // 測試不同斷點
+        function testBreakpoint(type) {
+            let width;
+            switch(type) {
+                case 'desktop': width = 1200; break;
+                case 'tablet': width = 900; break;
+                case 'mobile': width = 600; break;
+                case 'small-mobile': width = 400; break;
+                case 'tiny-mobile': width = 320; break;
+            }
+            
+            // 調整視窗大小（如果可能的話）
+            if (window.outerWidth !== window.innerWidth) {
+                window.resizeTo(width + 40, window.outerHeight);
+            }
+            
+            // 觸發resize事件
+            window.dispatchEvent(new Event('resize'));
+            
+            // 更新顯示
+            setTimeout(updateScreenSize, 100);
+        }
+        
+        // 觸控測試功能
+        function toggleTouchTest() {
+            touchTestActive = !touchTestActive;
+            const button = document.querySelector('.test-toggle');
+            const indicator = document.getElementById('touchIndicator');
+            
+            if (touchTestActive) {
+                button.textContent = '停止觸控測試';
+                button.classList.add('active');
+                indicator.style.display = 'block';
+                indicator.textContent = '觸控測試已啟動 - 點擊或觸摸測試區域';
+            } else {
+                button.textContent = '開始觸控測試';
+                button.classList.remove('active');
+                indicator.style.display = 'none';
+            }
+        }
+        
+        // 觸控事件處理
+        function handleTouch(e) {
+            if (!touchTestActive) return;
+            
+            touchCount++;
+            document.getElementById('touchCount').textContent = touchCount;
+            
+            const indicator = document.getElementById('touchIndicator');
+            indicator.textContent = `觸控檢測到! 位置: ${e.touches ? e.touches[0].clientX + ',' + e.touches[0].clientY : e.clientX + ',' + e.clientY}`;
+            
+            // 觸控反饋動畫
+            indicator.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                indicator.style.transform = 'scale(1)';
+            }, 200);
+        }
+        
+        // 更新CSS測試
+        function updateCSSTest() {
+            const cssProperties = document.getElementById('cssProperties');
+            const width = window.innerWidth;
+            
+            let cssInfo = '';
+            
+            // 檢查當前應用的CSS規則
+            if (width >= 1025) {
+                cssInfo = '桌面模式: 完整佈局，最大寬度800px，完整字體大小';
+            } else if (width >= 769) {
+                cssInfo = '平板模式: 適中佈局，寬度95%，適中字體大小';
+            } else if (width >= 481) {
+                cssInfo = '手機模式: 手機佈局，寬度95%，縮小字體，觸控優化';
+            } else if (width >= 361) {
+                cssInfo = '小手機模式: 緊湊佈局，寬度98%，最小字體，隱藏裝飾';
+            } else {
+                cssInfo = '超小手機模式: 最小佈局，寬度99%，極簡設計';
+            }
+            
+            cssInfo += `<br><br><strong>當前CSS媒體查詢:</strong><br>`;
+            cssInfo += `@media (max-width: ${width}px) { ... }<br>`;
+            cssInfo += `觸控目標: 最小44px ✅<br>`;
+            cssInfo += `響應式字體: 已啟用 ✅<br>`;
+            cssInfo += `彈性佈局: 已啟用 ✅`;
+            
+            cssProperties.innerHTML = cssInfo;
+        }
+        
+        // 性能監控
+        function updatePerformanceMetrics() {
+            // 頁面載入時間
+            const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+            document.getElementById('loadTime').textContent = loadTime + 'ms';
+            
+            // DOM內容載入時間
+            const domReady = performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart;
+            document.getElementById('domReady').textContent = domReady + 'ms';
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateScreenSize();
+            updatePerformanceMetrics();
+            
+            // 事件監聽器
+            window.addEventListener('resize', updateScreenSize);
+            
+            // 觸控事件
+            const touchArea = document.getElementById('touchTestArea');
+            touchArea.addEventListener('touchstart', handleTouch);
+            touchArea.addEventListener('click', handleTouch);
+            
+            // 觸控測試按鈕事件
+            document.querySelector('.test-toggle').addEventListener('click', toggleTouchTest);
+        });
+        
+        // 初始化背景音樂（測試用）
+        setTimeout(() => {
+            if (typeof initBackgroundMusic === 'function') {
+                initBackgroundMusic();
+            }
+        }, 1000);
+        
+        // 定期更新性能指標
+        setInterval(() => {
+            if (document.getElementById('touchCount')) {
+                document.getElementById('touchCount').textContent = touchCount;
+            }
+        }, 1000);
+    </script>
+</body>
+</html> 

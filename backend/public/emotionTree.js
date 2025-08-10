@@ -9,37 +9,93 @@ function EmotionTree({ emotions, onSelect, containerId = 'mainEmotions' }) {
     container.innerHTML = '';
     container.style.position = 'relative';
 
-    // 樹幹與分枝座標
-    const width = 400, height = 340, centerX = width / 2, trunkY = height - 40;
-    const branchCoords = [
-        { x: centerX, y: trunkY - 140 }, // 上
-        { x: centerX - 110, y: trunkY - 70 }, // 左上
-        { x: centerX + 110, y: trunkY - 70 }, // 右上
-        { x: centerX - 70, y: trunkY + 10 }, // 左下
-        { x: centerX + 70, y: trunkY + 10 }, // 右下
-        { x: centerX, y: trunkY + 60 } // 自訂
-    ];
+    // 響應式尺寸計算
+    const isMobile = window.innerWidth <= 768;
+    const isSmallMobile = window.innerWidth <= 480;
+    
+    let width, height, centerX, trunkY;
+    let branchCoords;
+    
+    if (isSmallMobile) {
+        // 超小手機
+        width = 300;
+        height = 280;
+        centerX = width / 2;
+        trunkY = height - 30;
+        branchCoords = [
+            { x: centerX, y: trunkY - 110 }, // 上
+            { x: centerX - 80, y: trunkY - 55 }, // 左上
+            { x: centerX + 80, y: trunkY - 55 }, // 右上
+            { x: centerX - 50, y: trunkY + 8 }, // 左下
+            { x: centerX + 50, y: trunkY + 8 }, // 右下
+            { x: centerX, y: trunkY + 45 } // 自訂
+        ];
+    } else if (isMobile) {
+        // 一般手機
+        width = 350;
+        height = 300;
+        centerX = width / 2;
+        trunkY = height - 35;
+        branchCoords = [
+            { x: centerX, y: trunkY - 120 }, // 上
+            { x: centerX - 95, y: trunkY - 60 }, // 左上
+            { x: centerX + 95, y: trunkY - 60 }, // 右上
+            { x: centerX - 60, y: trunkY + 8 }, // 左下
+            { x: centerX + 60, y: trunkY + 8 }, // 右下
+            { x: centerX, y: trunkY + 50 } // 自訂
+        ];
+    } else {
+        // 桌面/平板
+        width = 400;
+        height = 340;
+        centerX = width / 2;
+        trunkY = height - 40;
+        branchCoords = [
+            { x: centerX, y: trunkY - 140 }, // 上
+            { x: centerX - 110, y: trunkY - 70 }, // 左上
+            { x: centerX + 110, y: trunkY - 70 }, // 右上
+            { x: centerX - 70, y: trunkY + 10 }, // 左下
+            { x: centerX + 70, y: trunkY + 10 }, // 右下
+            { x: centerX, y: trunkY + 60 } // 自訂
+        ];
+    }
 
     // SVG
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('width', '100%');
     svg.setAttribute('height', height);
     svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-    svg.setAttribute('style', 'max-width:420px;display:block;margin:auto;');
+    
+    // 響應式SVG樣式
+    const svgStyle = isSmallMobile ? 
+        'max-width:320px;display:block;margin:auto;' :
+        isMobile ? 
+        'max-width:380px;display:block;margin:auto;' :
+        'max-width:420px;display:block;margin:auto;';
+    
+    svg.setAttribute('style', svgStyle);
 
-    // 畫樹幹
+    // 畫樹幹 - 響應式線條寬度
+    const trunkWidth = isSmallMobile ? 14 : isMobile ? 16 : 18;
+    const branchWidth = isSmallMobile ? 7 : isMobile ? 8 : 10;
+    const smallBranchWidth = isSmallMobile ? 6 : isMobile ? 7 : 8;
+    
     svg.innerHTML = `
-      <path d="M${centerX},${trunkY} Q${centerX},${trunkY-60} ${centerX},${trunkY-160}" stroke="#8d5524" stroke-width="18" fill="none"/>
-      <path d="M${centerX},${trunkY-80} Q${centerX-60},${trunkY-120} ${centerX-110},${trunkY-70}" stroke="#8d5524" stroke-width="10" fill="none"/>
-      <path d="M${centerX},${trunkY-80} Q${centerX+60},${trunkY-120} ${centerX+110},${trunkY-70}" stroke="#8d5524" stroke-width="10" fill="none"/>
-      <path d="M${centerX},${trunkY-30} Q${centerX-30},${trunkY+10} ${centerX-70},${trunkY+10}" stroke="#8d5524" stroke-width="8" fill="none"/>
-      <path d="M${centerX},${trunkY-30} Q${centerX+30},${trunkY+10} ${centerX+70},${trunkY+10}" stroke="#8d5524" stroke-width="8" fill="none"/>
+      <path d="M${centerX},${trunkY} Q${centerX},${trunkY-60} ${centerX},${trunkY-160}" stroke="#8d5524" stroke-width="${trunkWidth}" fill="none"/>
+      <path d="M${centerX},${trunkY-80} Q${centerX-60},${trunkY-120} ${centerX-110},${trunkY-70}" stroke="#8d5524" stroke-width="${branchWidth}" fill="none"/>
+      <path d="M${centerX},${trunkY-80} Q${centerX+60},${trunkY-120} ${centerX+110},${trunkY-70}" stroke="#8d5524" stroke-width="${branchWidth}" fill="none"/>
+      <path d="M${centerX},${trunkY-30} Q${centerX-30},${trunkY+10} ${centerX-70},${trunkY+10}" stroke="#8d5524" stroke-width="${smallBranchWidth}" fill="none"/>
+      <path d="M${centerX},${trunkY-30} Q${centerX+30},${trunkY+10} ${centerX+70},${trunkY+10}" stroke="#8d5524" stroke-width="${smallBranchWidth}" fill="none"/>
     `;
 
     // 狀態
     let selectedIdx = null;
     let customInput = null;
     let dove = null;
+
+    // 響應式按鈕尺寸
+    const buttonRadius = isSmallMobile ? 26 : isMobile ? 28 : 32;
+    const fontSize = isSmallMobile ? 12 : isMobile ? 14 : 16;
 
     // 建立情緒按鈕
     emotions.forEach((emotion, idx) => {
@@ -49,7 +105,7 @@ function EmotionTree({ emotions, onSelect, containerId = 'mainEmotions' }) {
         const btn = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         btn.setAttribute('cx', x);
         btn.setAttribute('cy', y);
-        btn.setAttribute('r', 32);
+        btn.setAttribute('r', buttonRadius);
         btn.setAttribute('tabindex', 0);
         btn.setAttribute('class', 'emotion-tree-btn');
         btn.setAttribute('fill', '#fff');
@@ -86,7 +142,7 @@ function EmotionTree({ emotions, onSelect, containerId = 'mainEmotions' }) {
         text.setAttribute('x', x);
         text.setAttribute('y', y + 6);
         text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('font-size', '16');
+        text.setAttribute('font-size', fontSize);
         text.setAttribute('fill', '#1565c0');
         text.setAttribute('pointer-events', 'none');
         text.setAttribute('font-family', 'inherit');
@@ -105,6 +161,13 @@ function EmotionTree({ emotions, onSelect, containerId = 'mainEmotions' }) {
         selectedIdx = idx;
         updateBtnStyle();
 
+        // 響應式輸入框樣式
+        const inputWidth = isSmallMobile ? 100 : isMobile ? 110 : 120;
+        const inputPadding = isSmallMobile ? '8px 10px' : isMobile ? '8px 12px' : '6px 12px';
+        const inputFontSize = isSmallMobile ? 14 : isMobile ? 15 : 16;
+        const buttonPadding = isSmallMobile ? '8px 12px' : isMobile ? '8px 14px' : '6px 16px';
+        const buttonFontSize = isSmallMobile ? 13 : isMobile ? 14 : 16;
+
         // 建立輸入框
         customInput = document.createElement('div');
         customInput.style.position = 'absolute';
@@ -112,10 +175,34 @@ function EmotionTree({ emotions, onSelect, containerId = 'mainEmotions' }) {
         customInput.style.top = `${y + 60}px`;
         customInput.style.transform = 'translate(-50%,0)';
         customInput.style.zIndex = 10;
+        
+        // 響應式輸入框HTML
         customInput.innerHTML = `
-            <input id="customEmotionInput" type="text" maxlength="12" placeholder="請輸入心情…" style="padding:6px 12px;border-radius:18px;border:1.5px solid #2196F3;font-size:16px;width:120px;">
-            <button id="customEmotionSubmit" style="margin-left:8px;padding:6px 16px;border-radius:18px;background:#1565c0;color:#fff;border:none;cursor:pointer;">送出</button>
+            <input id="customEmotionInput" type="text" maxlength="12" placeholder="請輸入心情…" 
+                   style="padding:${inputPadding};border-radius:18px;border:1.5px solid #2196F3;font-size:${inputFontSize}px;width:${inputWidth}px;min-height:44px;box-sizing:border-box;">
+            <button id="customEmotionSubmit" 
+                    style="margin-left:8px;padding:${buttonPadding};border-radius:18px;background:#1565c0;color:#fff;border:none;cursor:pointer;font-size:${buttonFontSize}px;min-height:44px;">送出</button>
         `;
+        
+        // 在手機上調整輸入框位置和樣式
+        if (isMobile) {
+            customInput.style.top = `${y + 50}px`;
+            customInput.style.width = '100%';
+            customInput.style.left = '0';
+            customInput.style.transform = 'none';
+            customInput.style.padding = '0 15px';
+            customInput.style.boxSizing = 'border-box';
+            
+            // 手機上垂直排列
+            const inputElement = customInput.querySelector('#customEmotionInput');
+            const buttonElement = customInput.querySelector('#customEmotionSubmit');
+            
+            inputElement.style.width = '100%';
+            inputElement.style.marginBottom = '8px';
+            buttonElement.style.width = '100%';
+            buttonElement.style.marginLeft = '0';
+        }
+        
         container.appendChild(customInput);
 
         // 送出事件
@@ -156,9 +243,15 @@ function EmotionTree({ emotions, onSelect, containerId = 'mainEmotions' }) {
     // 顯示白鴿動畫
     function showDove(x, y) {
         if (dove) dove.remove();
+        
+        // 響應式鴿子尺寸
+        const doveSize = isSmallMobile ? 0.8 : isMobile ? 0.9 : 1;
+        const doveX = x - (18 * doveSize);
+        const doveY = y - (48 * doveSize);
+        
         dove = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         dove.setAttribute('id', 'dove-anim');
-        dove.setAttribute('transform', `translate(${x-18},${y-48})`);
+        dove.setAttribute('transform', `translate(${doveX},${doveY}) scale(${doveSize})`);
         dove.innerHTML = `
           <g>
             <ellipse cx="18" cy="32" rx="18" ry="10" fill="#fff" opacity="0.7"/>
@@ -168,15 +261,35 @@ function EmotionTree({ emotions, onSelect, containerId = 'mainEmotions' }) {
             <path d="M18 32 Q10 24 18 20 Q26 24 18 32" fill="#e3f2fd"/>
             <polygon points="30,18 38,14 30,22" fill="#fbc02d"/>
           </g>
-          <animateTransform attributeName="transform" type="translate" from="${x-18},${y-48}" to="${x-18},${y-54}" dur="0.7s" repeatCount="indefinite" direction="alternate" />
+          <animateTransform attributeName="transform" type="translate" from="${doveX},${doveY}" to="${doveX},${doveY - (6 * doveSize)}" dur="0.7s" repeatCount="indefinite" direction="alternate" />
         `;
         svg.appendChild(dove);
     }
 
-    // 響應式定位
-    window.addEventListener('resize', () => {
-        if (customInput) customInput.style.left = `calc(50% + ${branchCoords[5].x - width / 2}px)`;
-    });
+    // 響應式定位和重新渲染
+    function handleResize() {
+        // 重新計算尺寸
+        const newIsMobile = window.innerWidth <= 768;
+        const newIsSmallMobile = window.innerWidth <= 480;
+        
+        if (newIsMobile !== isMobile || newIsSmallMobile !== isSmallMobile) {
+            // 重新渲染整個情緒樹
+            EmotionTree({ emotions, onSelect, containerId });
+        } else if (customInput) {
+            // 只調整輸入框位置
+            const currentBranch = branchCoords[5];
+            if (newIsMobile) {
+                customInput.style.left = '0';
+                customInput.style.transform = 'none';
+            } else {
+                customInput.style.left = `calc(50% + ${currentBranch.x - width / 2}px)`;
+                customInput.style.transform = 'translate(-50%,0)';
+            }
+        }
+    }
+
+    // 監聽視窗大小改變
+    window.addEventListener('resize', handleResize);
 }
 
 // 匯出
