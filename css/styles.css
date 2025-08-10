@@ -9,25 +9,11 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /*??*/
-    background-image: url('https://images.unsplash.com/photo-1501696461415-6bd6660c6742?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     position: relative;
 }
-
-body::before {
-    /* content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.85);
-    z-index: -1; */
-}
-
 h1 {
     color: #3a506b;
     margin-top: 40px;

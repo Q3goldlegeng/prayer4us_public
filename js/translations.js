@@ -374,6 +374,15 @@ function updatePageLanguage() {
     
     // Update voice selector if it exists
     updateVoiceSelector();
+    //c3
+    updateMusicButton();
+  updateMusicTypeOptions(currentLanguage);
+   updateMusicTitle(currentLanguage);
+    updateMusicTypeLabel(currentLanguage);
+    updateVolumeLabel(currentLanguage);
+    updatePlayPauseButton(currentLanguage);
+    updateTTSVoiceOptions(currentLanguage);
+    updateMusicControlsLanguage(currentLanguage);
 }
 
 // Update emotion buttons with translated text

@@ -1,21 +1,15 @@
 document.addEventListener('DOMContentLoaded', function() {
     // 延遲初始化，確保頁面完全載入
-    
-    
-    
-    
-    
-    
     const musicControls = createMusicControls();
   if (musicControls) {
     document.body.appendChild(musicControls);
   }
-  updateAllLabelsForLanguage(currentLanguage);
+  updateAllLabelsForLanguage(currentLanguage());
   setTimeout(initBackgroundMusic, 1000);
 });
 // 背景音樂相關變數
 let backgroundMusic = null;
-let isMusicPlaying = false;
+let isMusicPlaying = false ;
 let musicVolume = 0.3; // 預設音量 30%
 let currentMusicType = 'piano'; // 預設音樂類型
 let currentLanguage = 'zh-Hant'; // 預設語言
@@ -172,11 +166,9 @@ function initBackgroundMusic() {
 
 
 function createMusicControls() {
-    // 檢查是否已存在音樂控制按鈕
     let musicContainer = document.getElementById('musicControls');
-    if (musicContainer) return musicContainer; // 只建立一次
+    if (musicContainer) return musicContainer;
 
-    // 創建音樂控制容器
     musicContainer = document.createElement('div');
     musicContainer.id = 'musicControls';
     musicContainer.style.cssText = `
@@ -654,21 +646,17 @@ async function initEmotions() {
   const currentEmotions = emotionsByLang[getCurrentLanguage()] || emotionsByLang['zh-Hant'];
   emotionHistory.push(currentEmotions);
 
-  let selectedEmotion = null; // 作用域提升
+  let selectedEmotion = null; 
 
   if (window.EmotionTree) {
     EmotionTree({
       emotions: currentEmotions,
       onSelect: (emotionText) => {
         selectedEmotion = emotionText;
-        // 可加上高亮效果
       },
       containerId: 'mainEmotions'
     });
-
     renderPersistentCustomEmotionInput();
-
-    // 綁定提交事件（確保元素已存在）
     const submitBtn = document.getElementById('emotionSubmit');
     if (submitBtn) {
       submitBtn.onclick = () => {
@@ -854,10 +842,6 @@ function createLanguageSelector() {
         recordVisit(newLang);
         resetEmotionSelection();
 
-        updateAllLabelsForLanguage(newLang);
-        
-        
-
     });
     langContainer.appendChild(langLabel);
     langContainer.appendChild(langSelector);
@@ -981,12 +965,10 @@ function submitCustomEmotion() {
 
 // 重置情緒選擇
 function resetEmotionSelection() {
-    otherSituationClickCount = 0; // 重置計數器
-    // 重新初始化情緒按鈕
-    // 這裡直接呼叫 initEmotions 即可，因為它已經根據語言產生情緒按鈕
+    otherSituationClickCount = 0;
     initEmotions();
     document.getElementById('backButton').style.display = 'none';
-    document.getElementById('verse').innerHTML = ''; // 清空經文區域
+    document.getElementById('verse').innerHTML = ''; 
     renderPersistentCustomEmotionInput();
 }
 
@@ -1059,7 +1041,7 @@ Shimmer: 柔和且舒緩的聲音，適合平靜的環境
 VOICE: [選擇的語音名稱，小寫]`;
         }
         
-        const response = await fetch('/api/gemini', {
+        const response = await fetch('/api/OpenAI', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content, prayerText })
@@ -1154,7 +1136,7 @@ async function getEmotionalVerse(emotion, isFirst = false) {
             }
         }, 1000);
 
-        const response = await fetch('/api/gemini', {
+        const response = await fetch('/api/OpenAI', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
