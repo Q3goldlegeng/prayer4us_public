@@ -1,5 +1,3 @@
-
-// 背景音樂相關變數
 let backgroundMusic = null;
 let isMusicPlaying = false ;
 let musicVolume = 0.3; // 預設音量 30%
@@ -176,45 +174,43 @@ function initBackgroundMusic() {
 
 
 function createMusicControls() {
+    const isMobile = window.innerWidth <= 768;
     // 檢查是否已存在音樂控制按鈕
     let musicContainer = document.getElementById('musicControls');
     if (musicContainer) return musicContainer; // 只建立一次
 
-    // 創建音樂控制容器
+    // 創建音樂控制容器（直接套用原 handleResize 內的樣式，響應式 by isMobile）
     musicContainer = document.createElement('div');
     musicContainer.id = 'musicControls';
-    
-    // 響應式樣式
-    const isMobile = window.innerWidth <= 768;
-    const containerStyle = isMobile ? `
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 10px;
-        padding: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-top: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        min-width: 180px;
-        max-width: 280px;
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1000;
-    ` : `
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 10px;
-        padding: 15px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-top: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        min-width: 200px;
-        max-width: 300px;
-    `;
-    
-    musicContainer.style.cssText = containerStyle;
+    if (isMobile) {
+        musicContainer.style.cssText = `
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 180px;
+            max-width: 280px;
+            position: static;
+        `;
+    } else {
+        musicContainer.style.cssText = `
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 200px;
+            max-width: 300px;
+            position: static;
+        `;
+    }
 
     // 音樂標題
     const musicTitle = document.createElement('div');
@@ -222,10 +218,10 @@ function createMusicControls() {
     musicTitle.textContent = getText('musicTitle');
     musicTitle.style.cssText = `
         font-weight: bold;
-        text-align: center;
-        margin-bottom: 8px;
         color: #333;
-        font-size: ${isMobile ? '14px' : '16px'};
+        font-size: 15px;
+        margin-right: 8px;
+        min-width: 80px;
     `;
 
     // 播放/暫停按鈕
@@ -233,15 +229,15 @@ function createMusicControls() {
     playPauseBtn.id = 'playPauseBtn';
     playPauseBtn.innerHTML = getText('play');
     playPauseBtn.style.cssText = `
-        padding: ${isMobile ? '10px 16px' : '8px 12px'};
+        padding: 8px 12px;
         border: none;
         border-radius: 5px;
         background: ${isMusicPlaying ? '#f44336' : '#4CAF50'};
         color: white;
         cursor: pointer;
-        font-size: ${isMobile ? '13px' : '14px'};
+        font-size: 14px;
         transition: background 0.3s;
-        min-height: ${isMobile ? '44px' : 'auto'};
+        margin-right: 8px;
     `;
     playPauseBtn.onclick = function() {
         toggleMusic();
@@ -253,6 +249,7 @@ function createMusicControls() {
         display: flex;
         flex-direction: column;
         gap: 5px;
+        min-width: 90px;
     `;
 
     const musicTypeLabel = document.createElement('label');
@@ -303,6 +300,7 @@ musicTypeLabel.textContent = getText('musicTypeLabel');
         display: flex;
         flex-direction: column;
         gap: 5px;
+        min-width: 90px;
     `;
 
     const volumeLabel = document.createElement('label');
@@ -396,75 +394,12 @@ musicTypeLabel.textContent = getText('musicTypeLabel');
             musicContainer.style.display = 'none';
         };
         musicContainer.appendChild(closeBtn);
-        
         // 添加拖拽功能
-        let isDragging = false;
-        let startX, startY, startLeft, startTop;
-        
-        musicTitle.style.cursor = 'move';
-        musicTitle.addEventListener('mousedown', startDrag);
-        musicTitle.addEventListener('touchstart', startDrag);
-        
-        function startDrag(e) {
-            e.preventDefault();
-            isDragging = true;
-            const rect = musicContainer.getBoundingClientRect();
-            startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
-            startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
-            startLeft = rect.left;
-            startTop = rect.top;
-            
-            document.addEventListener('mousemove', drag);
-            document.addEventListener('touchmove', drag);
-            document.addEventListener('mouseup', stopDrag);
-            document.addEventListener('touchend', stopDrag);
-        }
-        
-        function drag(e) {
-            if (!isDragging) return;
-            e.preventDefault();
-            const currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
-            const currentY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
-            
-            const deltaX = currentX - startX;
-            const deltaY = currentY - startY;
-            
-            musicContainer.style.left = (startLeft + deltaX) + 'px';
-            musicContainer.style.top = (startTop + deltaY) + 'px';
-        }
-        
-        function stopDrag() {
-            isDragging = false;
-            document.removeEventListener('mousemove', drag);
-            document.removeEventListener('touchmove', drag);
-            document.removeEventListener('mouseup', stopDrag);
-            document.removeEventListener('touchend', stopDrag);
-        }
+        // 不再添加手機關閉按鈕與拖曳功能，因為已經嵌入語言框
     }
-
     return musicContainer;
 }
 
-function changeMusicType(musicType) {
-    if (!backgroundMusic || musicType === currentMusicType) return;
-
-    // 先暫停並重設音樂
-    backgroundMusic.pause();
-    backgroundMusic.currentTime = 0;
-    isMusicPlaying = false;
-
-    currentMusicType = musicType;
-    backgroundMusic.src = musicFiles[musicType];
-    backgroundMusic.load();
-
-    // 自動播放新音樂
-    backgroundMusic.play().then(() => {
-        isMusicPlaying = true;
-        updateMusicButton();
-    }).catch(error => {
-        console.warn('切換音樂失敗:', error);
-    });
-}
 const playPauseButtonTexts = {
     'zh-Hant': { play: '▶️ 播放', pause: '⏸️ 暫停' },
     'zh-Hans': { play: '▶️ 播放', pause: '⏸️ 暂停' },
@@ -477,7 +412,7 @@ const playPauseButtonTexts = {
     'nl': { play: '▶️ Afspelen', pause: '⏸️ Pauze' },
     'es': { play: '▶️ Reproducir', pause: '⏸️ Pausa' }
   };
-  function updateMusicControlsLanguage(newLang) {
+    function updateMusicControlsLanguage(newLang) {
     currentLanguage = newLang;
   
     // 更新標題
@@ -877,6 +812,7 @@ function drawConnectors(branchCoords, btnIds) {
 
 // 創建語言選擇器
 function createLanguageSelector() {
+    console.log('創建語言選擇器');
     if (document.getElementById('mainContainer')) return;
     // 外層容器
     const mainContainer = document.createElement('div');
@@ -915,7 +851,7 @@ function createLanguageSelector() {
         transition: transform 0.4s cubic-bezier(.4,2,.6,1);
     `;
 
-    // menuWrapper：語言選擇器和音樂控制上下排列
+    // menuWrapper：語言選擇器和音樂控制上下排列，且本身就是響應式的主框
     const menuWrapper = document.createElement('div');
     menuWrapper.id = 'menuWrapper';
     menuWrapper.style.display = 'flex';
@@ -925,6 +861,13 @@ function createLanguageSelector() {
     menuWrapper.style.height = 'auto';
     menuWrapper.style.transition = 'transform 0.4s cubic-bezier(.4,2,.6,1)';
     menuWrapper.style.transform = 'translateX(0)';
+    menuWrapper.style.background = 'rgba(255,255,255,0.95)';
+    menuWrapper.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+    menuWrapper.style.borderRadius = '10px';
+    menuWrapper.style.padding = '15px 10px';
+    menuWrapper.style.margin = '0';
+    menuWrapper.style.width = '100%';
+    menuWrapper.style.maxWidth = '320px';
 
     // 語言下拉
     const langContainer = document.createElement('div');
@@ -940,6 +883,7 @@ function createLanguageSelector() {
     langContainer.style.transition = 'box-shadow 0.3s';
     langContainer.style.position = 'static';
     langContainer.style.marginBottom = '12px';
+    langContainer.style.marginRight = '0';
 
     // 語言標籤
     const langLabel = document.createElement('span');
@@ -986,8 +930,16 @@ function createLanguageSelector() {
     if (musicControls) {
         musicControls.style.background = 'transparent';
         musicControls.style.boxShadow = 'none';
+        musicControls.style.borderRadius = '0';
         musicControls.style.padding = '0';
-        musicControls.style.marginTop = '0';
+        musicControls.style.margin = '0';
+        musicControls.style.width = '100%';
+        musicControls.style.maxWidth = 'none';
+        musicControls.style.flexDirection = 'row';
+        musicControls.style.gap = '12px';
+        musicControls.classList.add('music-controls');
+         musicControls.style.flexDirection = 'column';
+        // 直接上下 append 到 menuWrapper
         menuWrapper.appendChild(langContainer);
         menuWrapper.appendChild(musicControls);
     } else {
@@ -1014,37 +966,16 @@ function createLanguageSelector() {
 }
 function updateAllLabelsForLanguage(newLang) {
     currentLanguage = newLang;
-    
-    // 音樂區標題
-    const musicTitle = document.getElementById('musicTitle');
-    if (musicTitle) musicTitle.textContent = getText('musicTitle');
-
-    // 播放/暫停按鈕文字
-    updateMusicButton();
-
-    // 音樂類型標籤
-    const musicTypeLabel = document.getElementById('musicTypeLabel');
-    if (musicTypeLabel) musicTypeLabel.textContent = getText('musicTypeLabel');
-
-    // 音量標籤
-    const volumeLabel = document.getElementById('volumeLabel');
-    if (volumeLabel) volumeLabel.textContent = getText('volumeLabel');
-
-    // 動態重建音樂類型下拉選項文字
-    updateMusicTypeOptions(currentLanguage);
-    
-    // 更新其他音樂控制元素
+    // 只更新現有 DOM 標籤內容
     updateMusicTitle(currentLanguage);
     updateMusicTypeLabel(currentLanguage);
     updateVolumeLabel(currentLanguage);
     updatePlayPauseButton(currentLanguage);
-    
+    updateMusicTypeOptions(currentLanguage);
     // 檢查並更新 TTS 語音選項（如果存在）
     if (typeof updateTTSVoiceOptions === 'function') {
         updateTTSVoiceOptions(currentLanguage);
     }
-    
-    // 檢查並更新音樂控制語言（如果存在）
     if (typeof updateMusicControlsLanguage === 'function') {
         updateMusicControlsLanguage(currentLanguage);
     }
@@ -1798,58 +1729,12 @@ window.stopMusic = stopMusic;
 window.initBackgroundMusic = initBackgroundMusic;
 
 // 響應式處理函數
-function handleResize() {
-    const musicContainer = document.getElementById('musicControls');
-    if (musicContainer) {
-        const isMobile = window.innerWidth <= 768;
-        
-        if (isMobile) {
-            // 手機樣式
-            musicContainer.style.cssText = `
-                background: rgba(255, 255, 255, 0.95);
-                border-radius: 10px;
-                padding: 12px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                margin-top: 10px;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-                min-width: 180px;
-                max-width: 280px;
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                z-index: 1000;
-            `;
-        } else {
-            // 桌面樣式
-            musicContainer.style.cssText = `
-                background: rgba(255, 255, 255, 0.95);
-                border-radius: 10px;
-                padding: 15px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                margin-top: 10px;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                min-width: 200px;
-                max-width: 300px;
-                position: static;
-            `;
-        }
-    }
-}
 
-// 監聽視窗大小改變
-window.addEventListener('resize', handleResize);
+// (handleResize 已移除)
 
 // 初始化時檢查一次
 document.addEventListener('DOMContentLoaded', function() {
-    // 延遲初始化，確保頁面完全載入
-    const musicControls = createMusicControls();
-    if (musicControls) {
-        document.body.appendChild(musicControls);
-    }
+    createLanguageSelector();
     updateAllLabelsForLanguage(currentLanguage);
     setTimeout(initBackgroundMusic, 1000);
 });
@@ -1858,5 +1743,3 @@ document.addEventListener('DOMContentLoaded', function() {
 window.showPreviousEmotions = showPreviousEmotions;
 window.submitCustomEmotion = submitCustomEmotion;
 window.resetEmotionSelection = resetEmotionSelection;
-
-
