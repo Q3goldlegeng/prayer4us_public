@@ -370,33 +370,7 @@ musicTypeLabel.textContent = getText('musicTypeLabel');
     musicContainer.appendChild(musicTypeContainer);
     musicContainer.appendChild(volumeContainer);
 
-    // 在手機上添加關閉按鈕
-    if (isMobile) {
-        const closeBtn = document.createElement('button');
-        closeBtn.innerHTML = '✕';
-        closeBtn.style.cssText = `
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: #f44336;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        `;
-        closeBtn.onclick = function() {
-            musicContainer.style.display = 'none';
-        };
-        musicContainer.appendChild(closeBtn);
-        // 添加拖拽功能
-        // 不再添加手機關閉按鈕與拖曳功能，因為已經嵌入語言框
-    }
+    
     return musicContainer;
 }
 
@@ -869,22 +843,6 @@ function createLanguageSelector() {
     menuWrapper.style.width = '100%';
     menuWrapper.style.maxWidth = '320px';
 
-    // 語言下拉
-    const langContainer = document.createElement('div');
-    langContainer.id = 'languageContainer';
-    langContainer.style.display = 'flex';
-    langContainer.style.flexDirection = 'column';
-    langContainer.style.gap = '10px';
-    langContainer.style.background = 'rgba(255, 255, 255, 0.95)';
-    langContainer.style.borderRadius = '10px';
-    langContainer.style.padding = '15px';
-    langContainer.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-    langContainer.style.minWidth = '200px';
-    langContainer.style.transition = 'box-shadow 0.3s';
-    langContainer.style.position = 'static';
-    langContainer.style.marginBottom = '12px';
-    langContainer.style.marginRight = '0';
-
     // 語言標籤
     const langLabel = document.createElement('span');
     langLabel.textContent = t('languageSelector') + ': ';
@@ -922,8 +880,6 @@ function createLanguageSelector() {
         resetEmotionSelection();
         updateMusicTypeOptions(newLanguage);
     });
-    langContainer.appendChild(langLabel);
-    langContainer.appendChild(langSelector);
 
     // 音樂控制面板
     const musicControls = createMusicControls();
@@ -938,12 +894,14 @@ function createLanguageSelector() {
         musicControls.style.flexDirection = 'row';
         musicControls.style.gap = '12px';
         musicControls.classList.add('music-controls');
-         musicControls.style.flexDirection = 'column';
-        // 直接上下 append 到 menuWrapper
-        menuWrapper.appendChild(langContainer);
+        musicControls.style.flexDirection = 'column';
+        // 直接 append 語言標籤、下拉和音樂控制到 menuWrapper
+        menuWrapper.appendChild(langLabel);
+        menuWrapper.appendChild(langSelector);
         menuWrapper.appendChild(musicControls);
     } else {
-        menuWrapper.appendChild(langContainer);
+        menuWrapper.appendChild(langLabel);
+        menuWrapper.appendChild(langSelector);
     }
 
     let isCollapsed = false;
@@ -951,10 +909,16 @@ function createLanguageSelector() {
         isCollapsed = !isCollapsed;
         if (isCollapsed) {
             menuWrapper.style.transform = 'translateX(100%)';
-            toggleBtn.style.transform = 'translateX(250px)';
+            menuWrapper.style.opacity = '0';
+            menuWrapper.style.pointerEvents = 'none';
+            menuWrapper.style.visibility = 'hidden';
+            toggleBtn.style.transform = 'translateX(235px)';
             toggleBtn.innerHTML = '&lt;';
         } else {
             menuWrapper.style.transform = 'translateX(0)';
+            menuWrapper.style.opacity = '1';
+            menuWrapper.style.pointerEvents = 'auto';
+            menuWrapper.style.visibility = 'visible';
             toggleBtn.style.transform = 'translateX(0)';
             toggleBtn.innerHTML = '&gt;';
         }
@@ -1081,7 +1045,7 @@ Shimmer: 柔和且舒緩的聲音，適合平靜的環境
 VOICE: [選擇的語音名稱，小寫]`;
         }
         
-        // 改為呼叫 Groq API 代理端點
+        // 呼叫 OpenAI API 代理端點
         const response = await fetch('/api/OpenAI', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
