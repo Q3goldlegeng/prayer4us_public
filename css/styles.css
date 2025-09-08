@@ -559,6 +559,50 @@ button[style*="background-color: #2196F3"]:hover {
         min-width: 180px;
         max-width: 280px;
     }
+    #menuWrapper {
+        max-width: 175px !important;
+        width: 90vw !important;
+        padding: 10px 4px !important;
+        border-radius: 10px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.266) !important;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    #menuWrapper > span,
+    #menuWrapper > label,
+    #menuWrapper > select {
+        font-size: 12px !important;
+        padding: 4px 6px !important;
+        min-width: 0 !important;
+        margin: 0 0 2px 0 !important;
+    }
+    #menuWrapper > select {
+        border-radius: 10px !important;
+        font-size: 12px !important;
+        padding: 4px 6px !important;
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+    #musicControls {
+        padding: 6px !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        gap: 6px !important;
+    }
+    #musicControls * {
+        font-size: 12px !important;
+        padding: 4px 6px !important;
+        min-width: 0 !important;
+    }
+    #musicControls button {
+        font-size: 12px !important;
+        padding: 4px 8px !important;
+        border-radius: 6px !important;
+    }
+    #musicControls input[type="range"] {
+        height: 4px !important;
+    }
 
     
 }

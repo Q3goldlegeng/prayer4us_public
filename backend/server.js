@@ -105,7 +105,7 @@ app.post('/api/OpenAI', async (req, res) => {
         'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini',
+        model: 'gpt-4',
         messages: [
           { role: 'system', content: 'You are a helpful assistant that responds with the given structured tags.' },
           { role: 'user', content: promptWithTags }

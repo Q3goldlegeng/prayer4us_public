@@ -722,13 +722,13 @@ async function initEmotions() {
         if (!value) {
           alert('請輸入您的想法');
           return;
-        }
         getEmotionalVerse(`${selectedEmotion}｜${value}`, true);
       };
     }
   } else {
     console.error('EmotionTree is not defined');
   }
+}
 }
 function updateMusicTypeOptions(currentLang) {
     const musicTypeSelect = document.getElementById('musicTypeSelect');
@@ -1142,8 +1142,8 @@ async function getEmotionalVerse(emotion, isFirst = false) {
         }, 1000);
 
         // 產生禱告詞
-        // 改為呼叫 Groq API 代理端點
-        const response = await fetch('/api/groq', {
+        // 改為呼叫 OpenAI API 代理端點
+        const response = await fetch('/api/OpenAI', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1153,56 +1153,50 @@ async function getEmotionalVerse(emotion, isFirst = false) {
             })
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        if (!data.choices || !Array.isArray(data.choices) || !data.choices[0]?.message?.content) {
-            // 若有 error 屬性，顯示原始錯誤
-            
-            let errorMsg = '';
-            if (data.error) {
-                errorMsg = data.error + (data.detail ? `: ${data.detail}` : '');
-            } else {
-                errorMsg = JSON.stringify(data);
-            }
-            throw new Error('Invalid API response structure\n' + errorMsg);
-        }
-        const responseText = data.choices[0].message.content.trim();
+if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-        // 嘗試多種格式解析
-        let scripture = '', explanation = '', prayerText = '';
-        // 1. 標準格式
-        const scriptureKey = t('scripture').replace('：', '');
-        const explanationKey = t('explanation').replace('：', '');
-        const prayerKey = t('prayer').replace('：', '');
-        let verseMatch = responseText.match(new RegExp(`【${scriptureKey}】([\s\S]+?)\n【${explanationKey}】`));
-        let comfortMatch = responseText.match(new RegExp(`【${explanationKey}】([\s\S]+?)\n【${prayerKey}】`));
-        let prayerMatch = responseText.match(new RegExp(`【${prayerKey}】([\s\S]+)`));
+// 新增：支援 {prayer, scripture, explanation} 結構
+let prayerText = '', scripture = '', explanation = '';
+if (data.prayer && data.scripture && data.explanation) {
+    prayerText = data.prayer;
+    scripture = data.scripture;
+    explanation = data.explanation;
+} else if (data.choices && Array.isArray(data.choices) && data.choices[0]?.message?.content) {
+    const responseText = data.choices[0].message.content.trim();
+    // 1. 標準格式
+    const scriptureKey = t('scripture').replace('：', '');
+    const explanationKey = t('explanation').replace('：', '');
+    const prayerKey = t('prayer').replace('：', '');
+    let verseMatch = responseText.match(new RegExp(`【${scriptureKey}】([\\s\\S]+?)\\n【${explanationKey}】`));
+    let comfortMatch = responseText.match(new RegExp(`【${explanationKey}】([\\s\\S]+?)\\n【${prayerKey}】`));
+    let prayerMatch = responseText.match(new RegExp(`【${prayerKey}】([\\s\\S]+)`));
 
-        if (verseMatch && comfortMatch && prayerMatch) {
-            scripture = verseMatch[1].trim();
-            explanation = comfortMatch[1].trim();
-            prayerText = prayerMatch[1].trim();
+    if (verseMatch && comfortMatch && prayerMatch) {
+        scripture = verseMatch[1].trim();
+        explanation = comfortMatch[1].trim();
+        prayerText = prayerMatch[1].trim();
+    } else {
+        // 2. 嘗試解析 markdown/星號格式
+        const prayerMd = responseText.match(/\*\*禱告\*\*[\s\S]+?\n([\s\S]+?)\n\*\*聖經經文\*\*/);
+        const verseMd = responseText.match(/\*\*聖經經文\*\*[\s\S]+?\n([\s\S]+?)\n\*\*簡短解說\*\*/);
+        const explanationMd = responseText.match(/\*\*簡短解說\*\*[\s\S]+?\n([\s\S]+?)(\n|$)/);
+        if (prayerMd && verseMd && explanationMd) {
+            prayerText = prayerMd[1].trim();
+            scripture = verseMd[1].trim();
+            explanation = explanationMd[1].trim();
         } else {
-            // 2. 嘗試解析 markdown/星號格式
-            // 例如 prayer, verse, explanation 以 **title** 或 **標題** 開頭
-            const prayerMd = responseText.match(/\*\*禱告\*\*[\s\S]+?\n([\s\S]+?)\n\*\*聖經經文\*\*/);
-            const verseMd = responseText.match(/\*\*聖經經文\*\*[\s\S]+?\n([\s\S]+?)\n\*\*簡短解說\*\*/);
-            const explanationMd = responseText.match(/\*\*簡短解說\*\*[\s\S]+?\n([\s\S]+?)(\n|$)/);
-            if (prayerMd && verseMd && explanationMd) {
-                prayerText = prayerMd[1].trim();
-                scripture = verseMd[1].trim();
-                explanation = explanationMd[1].trim();
-            } else {
-                // 3. fallback: 只要有 prayer/verse/explanation 關鍵字就分段
-                const prayerIdx = responseText.indexOf('禱告');
-                const verseIdx = responseText.indexOf('聖經經文');
-                const explanationIdx = responseText.indexOf('簡短解說');
-                if (prayerIdx !== -1 && verseIdx !== -1 && explanationIdx !== -1) {
-                    prayerText = responseText.substring(prayerIdx + 2, verseIdx).trim();
-                    scripture = responseText.substring(verseIdx + 4, explanationIdx).trim();
-                    explanation = responseText.substring(explanationIdx + 4).trim();
-                }
+            // 3. fallback: 只要有 prayer/verse/explanation 關鍵字就分段
+            const prayerIdx = responseText.indexOf('禱告');
+            const verseIdx = responseText.indexOf('聖經經文');
+            const explanationIdx = responseText.indexOf('簡短解說');
+            if (prayerIdx !== -1 && verseIdx !== -1 && explanationIdx !== -1) {
+                prayerText = responseText.substring(prayerIdx + 2, verseIdx).trim();
+                scripture = responseText.substring(verseIdx + 4, explanationIdx).trim();
+                explanation = responseText.substring(explanationIdx + 4).trim();
             }
         }
+    }
+}
 
         if (prayerText && scripture && explanation) {
             // 取得語音建議
