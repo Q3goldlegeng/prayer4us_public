@@ -703,7 +703,6 @@ async function initEmotions() {
       emotions: currentEmotions,
       onSelect: (emotionText) => {
         selectedEmotion = emotionText;
-        // 可加上高亮效果
       },
       containerId: 'mainEmotions'
     });
