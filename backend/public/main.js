@@ -1499,9 +1499,14 @@ const openAIVoices = {
           speed: 1.0
         })
       });
-  
       if (!response.ok) {
-        const errText = await response.text();
+        if(response.status === 429) {
+            const data = await response.json();
+            alert(data.error || '已達使用上限');
+            return;
+        }
+
+        const errText = await response.json();
         throw new Error(errText || `HTTP error! ${response.status}`);
       }
   

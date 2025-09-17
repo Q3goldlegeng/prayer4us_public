@@ -4,14 +4,18 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-
 app.use(express.json());
-
-// -------- OpenAI API 產生禱告或經文 --------
-
-
+//限次數
+const userUsage = {};
 
 app.post('/api/OpenAI', async (req, res) => {
+  //限次數
+  const userIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  userUsage[userIp] = (userUsage[userIp] || 0) + 1;
+  if (userUsage[userIp] > 5) {
+    return res.status(429).json({ error: '已達使用上限（5次）' });
+  }
+
   const { content, emotion, currentLanguage = 'zh-Hant', prayerLength = 200, topic } = req.body;
 
   if (!OPENAI_API_KEY) {
@@ -70,7 +74,7 @@ app.post('/api/OpenAI', async (req, res) => {
           ? `감정 "${emotion}"에 대해 약 ${prayerLength}자 분량의 기도문을 작성하고, 관련 성경 구절과 간단한 설명을 한국어로 포함해 주세요.`
           : `주제 "${topic}"에 대해 약 ${prayerLength}자 분량의 기도문을 작성하고, 관련 성경 구절과 간단한 설명을 한국어로 포함해 주세요.`
     }
-    // 可自行擴充更多語言
+    
   };
 
   // 取得語言設定，預設繁體中文
@@ -105,7 +109,7 @@ app.post('/api/OpenAI', async (req, res) => {
         'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4.1-mini',
         messages: [
           { role: 'system', content: 'You are a helpful assistant that responds with the given structured tags.' },
           { role: 'user', content: promptWithTags }
