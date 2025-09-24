@@ -786,24 +786,18 @@ function drawConnectors(branchCoords, btnIds) {
 // 創建語言選擇器
 function createLanguageSelector() {
     console.log('創建語言選擇器');
-    if (document.getElementById('mainContainer')) return;
-    // 外層容器
-    const mainContainer = document.createElement('div');
-    mainContainer.id = 'mainContainer';
-    mainContainer.style.position = 'absolute';
-    mainContainer.style.top = '10px';
-    mainContainer.style.right = '10px';
-    mainContainer.style.display = 'flex';
-    mainContainer.style.flexDirection = 'row';
-    mainContainer.style.alignItems = 'flex-start';
-    mainContainer.style.height = 'auto';
-    mainContainer.style.zIndex = '3000';
+   
 
     // 收合按鈕
     const toggleBtn = document.createElement('button');
     toggleBtn.id = 'toggleBtn';
     toggleBtn.innerHTML = '&gt;';
     toggleBtn.style.cssText = `
+        position: fixed;
+
+        top: 60px;
+        right: 10px;
+        
         width: 16px;
         height: 36px;
         background: #fff;
@@ -825,6 +819,7 @@ function createLanguageSelector() {
     `;
 
     // menuWrapper：語言選擇器和音樂控制上下排列，且本身就是響應式的主框
+    if (document.getElementById('menuWrapper')) return;
     const menuWrapper = document.createElement('div');
     menuWrapper.id = 'menuWrapper';
     menuWrapper.style.display = 'flex';
@@ -841,6 +836,11 @@ function createLanguageSelector() {
     menuWrapper.style.margin = '0';
     menuWrapper.style.width = '100%';
     menuWrapper.style.maxWidth = '320px';
+    menuWrapper.style.position = 'fixed';
+menuWrapper.style.top = '60px';
+
+menuWrapper.style.right = '10px';
+menuWrapper.style.zIndex = '3000';
 
     // 語言標籤
     const langLabel = document.createElement('span');
@@ -907,25 +907,27 @@ function createLanguageSelector() {
     toggleBtn.onclick = function() {
         isCollapsed = !isCollapsed;
         if (isCollapsed) {
-            menuWrapper.style.transform = 'translateX(100%)';
+            toggleBtn.classList.add('collapsed');
+            
             menuWrapper.style.opacity = '0';
             menuWrapper.style.pointerEvents = 'none';
             menuWrapper.style.visibility = 'hidden';
-            toggleBtn.style.transform = 'translateX(235px)';
             toggleBtn.innerHTML = '&lt;';
         } else {
-            menuWrapper.style.transform = 'translateX(0)';
+           toggleBtn.classList.remove('collapsed');
+            menuWrapper.style.transform = 'translateX(20)';
             menuWrapper.style.opacity = '1';
             menuWrapper.style.pointerEvents = 'auto';
             menuWrapper.style.visibility = 'visible';
-            toggleBtn.style.transform = 'translateX(0)';
             toggleBtn.innerHTML = '&gt;';
         }
     };
 
-    mainContainer.appendChild(toggleBtn);
-    mainContainer.appendChild(menuWrapper);
-    document.body.appendChild(mainContainer);
+   
+if (musicControls) menuWrapper.appendChild(musicControls);
+
+document.body.appendChild(menuWrapper);
+document.body.appendChild(toggleBtn);
 }
 function updateAllLabelsForLanguage(newLang) {
     currentLanguage = newLang;
