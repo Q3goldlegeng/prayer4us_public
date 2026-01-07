@@ -60,7 +60,7 @@ async function main() {
   
   // ⚠️ 正式跑的時候，請把下面這行 .slice(0, 10) 刪掉，改成 cleanDocuments
   // 這樣才會跑整本聖經 (這裡預設先跑 10 筆測試，幫組員省錢)
-  const batchData = cleanDocuments.slice(0, 10); 
+  const batchData = cleanDocuments; 
 
   const vectorDatabase = [];
   let count = 0;

@@ -389,6 +389,11 @@ button[style*="background-color: #2196F3"]:hover {
 
 
 
+#persistentCustomEmotionInput {
+    resize: none !important;
+}
+
+
 /* 響應式設計 - 平板 */
 @media (max-width: 1024px) {
     body {
@@ -442,12 +447,14 @@ button[style*="background-color: #2196F3"]:hover {
         padding-top: 10px !important;
         max-width: 75vw !important;
         border-top: 1px solid #eee;
+        
     }
     #persistentCustomEmotionInput {
         min-height: 44px !important;
         font-size: 13px !important;
         padding: 8px !important;
         border-radius: 8px !important;
+        resize : none !important;
     }
     #mainEmotions {
         margin-top: 0 !important;

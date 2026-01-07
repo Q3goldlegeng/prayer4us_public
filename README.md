@@ -93,7 +93,7 @@ A multilingual emotional support website based on Bible verses, providing releva
 
 1. 複製 `.env.example.js` 為 `.env.js`
 2. 填入 OpenAI API 金鑰
-3. 使用本地伺服器運行（如 `npx http-server` 或 VSCode Live Server）
+3. 使用本地伺服器運行（如 `nx http-server` 或 VSCode Live Server）
 
 ## 部署到 Vercel
 
