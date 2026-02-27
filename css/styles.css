@@ -1038,3 +1038,53 @@ button[style*="background-color: #2196F3"]:hover {
   }
 }
 
+
+/* Service disclaimer card */
+#service-disclaimer {
+  position: fixed !important;
+  top: max(12px, env(safe-area-inset-top)) !important;
+  left: max(12px, env(safe-area-inset-left)) !important;
+  z-index: 3200 !important;
+  width: min(420px, calc(100vw - 24px)) !important;
+  padding: 10px 12px !important;
+  border: 1px solid #c77d2a !important;
+  border-radius: 10px !important;
+  background: rgba(255, 244, 228, 0.92) !important;
+  color: #5a2c00 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16) !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+}
+
+#service-disclaimer > div + div {
+  margin-top: 6px;
+}
+
+@media (max-width: 768px) {
+  #service-disclaimer {
+    top: max(8px, env(safe-area-inset-top)) !important;
+    left: max(8px, env(safe-area-inset-left)) !important;
+    width: min(62vw, 245px) !important;
+    padding: 6px 7px !important;
+    font-size: 9px !important;
+    line-height: 1.15 !important;
+    border-radius: 6px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #service-disclaimer {
+    top: max(6px, env(safe-area-inset-top)) !important;
+    left: max(6px, env(safe-area-inset-left)) !important;
+    width: min(56vw, 180px) !important;
+    padding: 4px 5px !important;
+    font-size: 7px !important;
+    line-height: 1.05 !important;
+    border-radius: 5px !important;
+  }
+}
