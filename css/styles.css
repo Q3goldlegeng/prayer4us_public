@@ -58,13 +58,11 @@ button {
 }
 
 button:hover {
-    transform: translateY(-3px);
     box-shadow: 0 7px 20px rgba(106, 133, 182, 0.6);
     background: linear-gradient(135deg, #5d7cad 0%, #a9b9d6 100%);
 }
 
 button:active {
-    transform: translateY(1px);
     box-shadow: 0 2px 10px rgba(106, 133, 182, 0.4);
 }
 
@@ -179,7 +177,6 @@ button:active {
 
 #play-button:hover {
     background: linear-gradient(135deg, #5d7cad 0%, #a9b9d6 100%);
-    transform: scale(1.05);
 }
 
 /* 自定義情緒輸入框樣式 */
@@ -365,26 +362,155 @@ button[style*="background-color: #2196F3"]:hover {
 
 /* 音樂控制器樣式 */
 #musicControls {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 10px;
-    padding: 15px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    margin-top: 10px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    min-width: 200px;
-    max-width: 300px;
+    gap: 14px;
+    width: 100%;
+}
+
+.floating-control-panel {
+    position: fixed;
+    top: 60px;
+    right: 12px;
+    z-index: 3000;
+    width: min(320px, calc(100vw - 24px));
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 18px;
+    box-shadow: 0 18px 40px rgba(33, 44, 64, 0.18);
+    backdrop-filter: blur(14px);
+    transition: opacity 0.28s ease, transform 0.28s ease, visibility 0.28s ease;
+}
+
+.music-controls-title {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #334765;
+    padding-bottom: 2px;
+}
+
+.music-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.music-control-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #5d6f89;
+}
+
+.music-control-select {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(106, 133, 182, 0.28);
+    background: rgba(248, 250, 255, 0.92);
+    color: #31455f;
+    font-size: 14px;
+    font-family: inherit;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.music-control-select:focus {
+    outline: none;
+    border-color: rgba(78, 112, 173, 0.8);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(106, 133, 182, 0.18);
+}
+
+.music-primary-btn {
+    width: 100%;
+    min-height: 46px;
+    margin: 0;
+    padding: 12px 16px;
+    border-radius: 14px;
+    box-shadow: 0 10px 20px rgba(95, 124, 179, 0.28);
+}
+
+.music-primary-btn[data-state="paused"] {
+    background: linear-gradient(135deg, #5b7fd1 0%, #8eb4f2 100%);
+}
+
+.music-primary-btn[data-state="playing"] {
+    background: linear-gradient(135deg, #e47d62 0%, #d95d74 100%);
+    box-shadow: 0 10px 20px rgba(217, 93, 116, 0.28);
+}
+
+.music-volume-slider {
+    width: 100%;
+    height: 6px;
+    margin: 4px 0 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(106, 133, 182, 0.9), rgba(186, 200, 224, 0.9));
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.music-volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #5676ba;
+    box-shadow: 0 3px 10px rgba(86, 118, 186, 0.35);
+    cursor: pointer;
+}
+
+.music-volume-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #5676ba;
+    box-shadow: 0 3px 10px rgba(86, 118, 186, 0.35);
+    cursor: pointer;
 }
 
 #toggleBtn {
   position: fixed;
-  top: 10px;
-  right: 100px;
+  top: 60px;
+  right: 344px;
   z-index: 3100;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  background: rgba(58, 80, 107, 0.92);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  box-shadow: 0 12px 24px rgba(33, 44, 64, 0.22);
+  transition: transform 0.24s ease, background 0.24s ease, box-shadow 0.24s ease, right 0.24s ease;
 }
+
+#toggleBtn:hover {
+  background: rgba(74, 97, 126, 0.96);
+  box-shadow: 0 16px 28px rgba(33, 44, 64, 0.28);
+}
+
 #toggleBtn.collapsed {
-  transform: translateX(120px);
+  right: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #3a506b;
+  box-shadow: 0 12px 24px rgba(33, 44, 64, 0.14);
 }
 
 
@@ -573,66 +699,44 @@ button[style*="background-color: #2196F3"]:hover {
         font-size: 13px;
     }
 
-    #musicControls {
+    .floating-control-panel {
+        top: 10px;
+        right: 10px;
+        width: min(86vw, 300px);
         padding: 12px;
-        min-width: 180px;
-        max-width: 280px;
+        gap: 12px;
+        border-radius: 16px;
     }
-    #menuWrapper {
-        max-width: 175px !important;
-        width: 90vw !important;
-        padding: 10px 4px !important;
-        border-radius: 10px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.266) !important;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        position: fixed;
-        top : 10px;
-        right:10px;
-        z-index: 3000 ;
+    .music-controls-title {
+        font-size: 14px;
     }
-    #menuWrapper > span,
-    #menuWrapper > label,
-    #menuWrapper > select {
-        font-size: 12px !important;
-        padding: 4px 6px !important;
-        min-width: 0 !important;
-        margin: 0 0 2px 0 !important;
+    .music-control-label {
+        font-size: 11px;
     }
-    #menuWrapper > select {
-        border-radius: 10px !important;
-        font-size: 12px !important;
-        padding: 4px 6px !important;
-        min-width: 0 !important;
-        width: 100% !important;
+    .music-control-select {
+        min-height: 40px;
+        padding: 9px 10px;
+        font-size: 13px;
     }
-    #musicControls {
-        padding: 6px !important;
-        min-width: 0 !important;
-        max-width: 100% !important;
-        gap: 6px !important;
+    .music-primary-btn {
+        min-height: 42px;
+        padding: 10px 14px;
+        font-size: 13px;
+        border-radius: 12px;
     }
-    #musicControls * {
-        font-size: 12px !important;
-        padding: 4px 6px !important;
-        min-width: 0 !important;
-    }
-    #musicControls button {
-        font-size: 12px !important;
-        padding: 4px 8px !important;
-        border-radius: 6px !important;
-    }
-    #musicControls input[type="range"] {
-        height: 4px !important;
+    .music-volume-slider {
+        height: 5px;
     }
     #toggleBtn {
-    right: 60px;
-    top: 10px;
-  }
+        top: 10px;
+        right: calc(min(86vw, 300px) + 18px);
+        width: 34px;
+        height: 34px;
+        font-size: 18px;
+    }
     #toggleBtn.collapsed {
-    transform: translateX(80px);
-  }
+        right: 10px;
+    }
     
 }
 
@@ -734,12 +838,6 @@ button[style*="background-color: #2196F3"]:hover {
         font-size: 12px;
     }
 
-    #musicControls {
-        padding: 10px;
-        min-width: 160px;
-        max-width: 250px;
-    }
-
     #titleBox {
         margin: 20px auto 0 auto;
         padding: 16px 0 10px 0;
@@ -762,13 +860,30 @@ button[style*="background-color: #2196F3"]:hover {
     #verse p:nth-of-type(3)::before {
         display: none;
     }
+    .floating-control-panel {
+        top: 8px;
+        right: 8px;
+        width: min(90vw, 280px);
+        padding: 10px;
+        gap: 10px;
+    }
+    .music-controls-title {
+        font-size: 13px;
+    }
+    .music-control-select,
+    .music-primary-btn {
+        font-size: 12px;
+    }
     #toggleBtn {
-    right: 8px;
-    top: 8px;
-  }
+        top: 8px;
+        right: calc(min(90vw, 280px) + 16px);
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
     #toggleBtn.collapsed {
-    transform: translateX(40px);
-  }
+        right: 8px;
+    }
 }
 
 /* 響應式設計 - 超小手機 */
@@ -1015,27 +1130,14 @@ button[style*="background-color: #2196F3"]:hover {
     }
     
     button:active {
-        transform: translateY(1px);
         box-shadow: 0 2px 10px rgba(106, 133, 182, 0.4);
     }
 }
 .music-controls {
   display: flex;
-  flex-direction: row;   /* 預設桌面橫排 */
-  gap: 12px;
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
-  padding: 0;
-  margin: 0;
+  flex-direction: column;
+  gap: 14px;
   width: 100%;
-  max-width: none;
-}
-
-@media (max-width: 768px) {
-  .music-controls {
-    flex-direction: column; /* 手機縱排 */
-  }
 }
 
 
@@ -1045,35 +1147,120 @@ button[style*="background-color: #2196F3"]:hover {
   top: max(12px, env(safe-area-inset-top)) !important;
   left: max(12px, env(safe-area-inset-left)) !important;
   z-index: 3200 !important;
-  width: min(420px, calc(100vw - 24px)) !important;
-  padding: 10px 12px !important;
+  width: min(440px, calc(100vw - 24px)) !important;
   border: 1px solid #c77d2a !important;
-  border-radius: 10px !important;
-  background: rgba(255, 244, 228, 0.92) !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, rgba(255, 249, 239, 0.96), rgba(255, 241, 220, 0.92)) !important;
   color: #5a2c00 !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  line-height: 1.5 !important;
   text-align: left !important;
   box-sizing: border-box !important;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16) !important;
   overflow-wrap: break-word !important;
   word-break: break-word !important;
+  backdrop-filter: blur(10px) !important;
 }
 
-#service-disclaimer > div + div {
-  margin-top: 6px;
+#service-disclaimer summary {
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+#service-disclaimer summary::-webkit-details-marker {
+  display: none;
+}
+
+#service-disclaimer summary::after {
+  content: "展開";
+  margin-left: auto;
+  flex-shrink: 0;
+  padding-left: 12px;
+  color: #8c4d14;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#service-disclaimer[open] summary::after {
+  content: "收起";
+}
+
+.disclaimer-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(199, 125, 42, 0.14);
+  color: #8a470c;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.disclaimer-summary-text {
+  display: block;
+  padding-top: 1px;
+  color: #6b3505;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.disclaimer-body {
+  padding: 0 14px 14px;
+  border-top: 1px solid rgba(199, 125, 42, 0.22);
+}
+
+.disclaimer-body p {
+  margin: 10px 0 0;
+  color: #5a2c00;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.disclaimer-body p:first-child {
+  margin-top: 12px;
 }
 
 @media (max-width: 768px) {
   #service-disclaimer {
     top: max(8px, env(safe-area-inset-top)) !important;
     left: max(8px, env(safe-area-inset-left)) !important;
-    width: min(62vw, 245px) !important;
-    padding: 6px 7px !important;
-    font-size: 9px !important;
-    line-height: 1.15 !important;
-    border-radius: 6px !important;
+    width: min(82vw, 320px) !important;
+    border-radius: 12px !important;
+  }
+
+  #service-disclaimer summary {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  #service-disclaimer summary::after {
+    font-size: 11px;
+    padding-left: 8px;
+  }
+
+  .disclaimer-badge {
+    font-size: 10px;
+    padding: 3px 7px;
+  }
+
+  .disclaimer-summary-text {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .disclaimer-body {
+    padding: 0 12px 12px;
+  }
+
+  .disclaimer-body p {
+    font-size: 11.5px;
+    line-height: 1.6;
   }
 }
 
@@ -1081,10 +1268,23 @@ button[style*="background-color: #2196F3"]:hover {
   #service-disclaimer {
     top: max(6px, env(safe-area-inset-top)) !important;
     left: max(6px, env(safe-area-inset-left)) !important;
-    width: min(56vw, 180px) !important;
-    padding: 4px 5px !important;
-    font-size: 7px !important;
-    line-height: 1.05 !important;
-    border-radius: 5px !important;
+    width: min(88vw, 296px) !important;
+  }
+
+  #service-disclaimer summary {
+    padding: 9px 10px;
+  }
+
+  .disclaimer-summary-text {
+    font-size: 11px;
+  }
+
+  .disclaimer-body {
+    padding: 0 10px 10px;
+  }
+
+  .disclaimer-body p {
+    font-size: 11px;
+    line-height: 1.55;
   }
 }

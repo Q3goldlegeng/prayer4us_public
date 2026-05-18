@@ -123,10 +123,11 @@ app.post('/api/OpenAI', async (req, res) => {
 - 一律使用繁體中文。
 - 語氣要溫暖、誠摯，具備適度副語言特徵的文字感。
 - 回覆必須嚴格使用以下 XML 標籤，不要輸出標籤外的任何文字：
-  1. <prayer>：放「暖心回應與情緒驗證」加上「針對性祈禱文」。
-  2. <scripture>：放經文或哲學文本。
-  3. <explanation>：放對經文或哲學文本的貼近解說。
-- <prayer> 內容需先有情緒驗證，再接祈禱或祝福。
+  1. <scripture>：放經文或哲學文本。
+  2. <explanation>：先放暖心回應與情緒驗證，再銜接這段經文或哲學文本如何呼應使用者現況的解說。
+  3. <prayer>：只放針對性的祈禱文或祝福語，並以「我們」為主詞。
+- <explanation> 必須先點出並命名核心情緒，再提供支持性的理解與文本解說。
+- <prayer> 必須明確遵守 prayerLength 長度要求，不要過短或明顯超出。
 - 若使用者情境不適合聖經經文，可改用哲學智慧或溫柔的精神性文字，但仍需保持安定、支持與尊重。`;
 
   // 明確要求標籤分段輸出
@@ -136,7 +137,10 @@ app.post('/api/OpenAI', async (req, res) => {
 <scripture>${lang.scripture}</scripture>
 <explanation>${lang.explanation}</explanation>
 
-請先做情緒驗證，再分享經文或哲學文字與解說，最後在 <prayer> 中完成以「我們」為主詞的祈禱或祝福。
+請先辨識並命名核心情緒。
+請在 <scripture> 放經文或哲學文本。
+請在 <explanation> 先完成暖心回應與情緒驗證，再說明這段文本如何呼應當下處境。
+請在 <prayer> 中完成以「我們」為主詞的祈禱或祝福。
 祈禱文長度請遵守 prayerLength = ${prayerLength}。
 根據以下的指示作答：${userPrompt}`;
 
@@ -149,7 +153,7 @@ app.post('/api/OpenAI', async (req, res) => {
         'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-mini',
+        model: 'gpt-5.4-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: promptWithTags }

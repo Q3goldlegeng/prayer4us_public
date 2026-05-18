@@ -174,102 +174,42 @@ function initBackgroundMusic() {
 
 
 function createMusicControls() {
-    const isMobile = window.innerWidth <= 768;
     // 檢查是否已存在音樂控制按鈕
     let musicContainer = document.getElementById('musicControls');
     if (musicContainer) return musicContainer; // 只建立一次
 
-    // 創建音樂控制容器（直接套用原 handleResize 內的樣式，響應式 by isMobile）
     musicContainer = document.createElement('div');
     musicContainer.id = 'musicControls';
-    if (isMobile) {
-        musicContainer.style.cssText = `
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
-            padding: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-top: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            min-width: 180px;
-            max-width: 280px;
-            position: static;
-        `;
-    } else {
-        musicContainer.style.cssText = `
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-top: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            min-width: 200px;
-            max-width: 300px;
-            position: static;
-        `;
-    }
+    musicContainer.className = 'music-controls';
 
     // 音樂標題
     const musicTitle = document.createElement('div');
     musicTitle.id = 'musicTitle';
     musicTitle.textContent = getText('musicTitle');
-    musicTitle.style.cssText = `
-        font-weight: bold;
-        color: #333;
-        font-size: 15px;
-        margin-right: 8px;
-        min-width: 80px;
-    `;
+    musicTitle.className = 'music-controls-title';
 
     // 播放/暫停按鈕
     const playPauseBtn = document.createElement('button');
     playPauseBtn.id = 'playPauseBtn';
     playPauseBtn.innerHTML = getText('play');
-    playPauseBtn.style.cssText = `
-        padding: 8px 12px;
-        border: none;
-        border-radius: 5px;
-        background: ${isMusicPlaying ? '#f44336' : '#4CAF50'};
-        color: white;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background 0.3s;
-        margin-right: 8px;
-    `;
+    playPauseBtn.className = 'music-primary-btn';
+    playPauseBtn.dataset.state = isMusicPlaying ? 'playing' : 'paused';
     playPauseBtn.onclick = function() {
         toggleMusic();
     };
 
     // 音樂類型選擇器
     const musicTypeContainer = document.createElement('div');
-    musicTypeContainer.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        min-width: 90px;
-    `;
+    musicTypeContainer.className = 'music-control-group';
 
     const musicTypeLabel = document.createElement('label');
-musicTypeLabel.id = 'musicTypeLabel';
-musicTypeLabel.textContent = getText('musicTypeLabel');
-    musicTypeLabel.style.cssText = `
-        font-weight: bold;
-        color: #333;
-        font-size: ${isMobile ? '12px' : '14px'};
-    `;
+    musicTypeLabel.id = 'musicTypeLabel';
+    musicTypeLabel.textContent = getText('musicTypeLabel');
+    musicTypeLabel.className = 'music-control-label';
 
     const musicTypeSelect = document.createElement('select');
     musicTypeSelect.id = 'musicTypeSelect';
-    musicTypeSelect.style.cssText = `
-        padding: ${isMobile ? '8px' : '5px'};
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        font-size: ${isMobile ? '12px' : '14px'};
-        min-height: ${isMobile ? '44px' : 'auto'};
-    `;
+    musicTypeSelect.className = 'music-control-select';
 
     // 添加音樂選項
     Object.keys(musicTypeNames).forEach(type => {
@@ -291,61 +231,24 @@ musicTypeLabel.textContent = getText('musicTypeLabel');
 
   updateMusicTypeOptions(currentLanguage);
 
-  musicTypeSelect.onchange = () => {
-    changeMusicType(musicTypeSelect.value);
-  };
+    musicTypeSelect.onchange = () => {
+        changeMusicType(musicTypeSelect.value);
+    };
 
     const volumeContainer = document.createElement('div');
-    volumeContainer.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        min-width: 90px;
-    `;
+    volumeContainer.className = 'music-control-group';
 
     const volumeLabel = document.createElement('label');
     volumeLabel.id = 'volumeLabel';
     volumeLabel.textContent = getText('volumeLabel');
-    volumeLabel.style.cssText = `
-        font-weight: bold;
-        color: #333;
-        font-size: ${isMobile ? '12px' : '14px'};
-    `;
+    volumeLabel.className = 'music-control-label';
 
     const volumeSlider = document.createElement('input');
     volumeSlider.type = 'range';
     volumeSlider.min = '0';
     volumeSlider.max = '100';
     volumeSlider.value = musicVolume * 100;
-    volumeSlider.style.cssText = `
-        width: 100%;
-        height: ${isMobile ? '6px' : '4px'};
-        border-radius: 2px;
-        background: #ddd;
-        outline: none;
-        -webkit-appearance: none;
-        appearance: none;
-    `;
-    
-    // 自定義滑塊樣式
-    if (isMobile) {
-        volumeSlider.style.cssText += `
-            -webkit-appearance: none;
-            appearance: none;
-            background: #ddd;
-            border-radius: 3px;
-            height: 6px;
-        `;
-        
-        // 添加觸控優化
-        volumeSlider.addEventListener('touchstart', function() {
-            this.style.background = '#6a85b6';
-        });
-        
-        volumeSlider.addEventListener('touchend', function() {
-            this.style.background = '#ddd';
-        });
-    }
+    volumeSlider.className = 'music-volume-slider';
     
     volumeSlider.oninput = function() {
         musicVolume = this.value / 100;
@@ -414,10 +317,10 @@ function updateMusicButton() {
     
     if (isMusicPlaying) {
         playPauseBtn.innerHTML = getText('pause');
-        playPauseBtn.style.background = '#f44336';
+        playPauseBtn.dataset.state = 'playing';
     } else {
         playPauseBtn.innerHTML = getText('play');
-        playPauseBtn.style.background = '#4CAF50';
+        playPauseBtn.dataset.state = 'paused';
     }
     
     // 音量條同步
@@ -761,7 +664,7 @@ function updatePlayPauseButton(lang) {
   const btn = document.getElementById('playPauseBtn');
   if (!btn) return;
   btn.innerHTML = isMusicPlaying ? getText('pause', lang) : getText('play', lang);
-  btn.style.background = isMusicPlaying ? '#f44336' : '#4CAF50';
+  btn.dataset.state = isMusicPlaying ? 'playing' : 'paused';
 }
 
 
@@ -791,67 +694,46 @@ function createLanguageSelector() {
     // 收合按鈕
     const toggleBtn = document.createElement('button');
     toggleBtn.id = 'toggleBtn';
-    toggleBtn.innerHTML = '&gt;';
-    toggleBtn.style.cssText = `
-        position: fixed;
-
-        top: 60px;
-        right: 10px;
-        
-        width: 16px;
-        height: 36px;
-        background: #fff;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 18px;
-        font-weight: bold;
-        color: #333;
-        cursor: pointer;
-        padding: 0;
-        line-height: 36px;
-        text-align: center;
-        z-index: 3100;
-        box-shadow: 0 2px 8px #0001;
-        margin-right: 8px;
-        margin-top: 8px;
-        align-self: flex-start;
-        transition: transform 0.4s cubic-bezier(.4,2,.6,1);
-    `;
+    toggleBtn.type = 'button';
+    toggleBtn.setAttribute('aria-label', '收合設定選單');
+    toggleBtn.setAttribute('aria-expanded', 'true');
+    toggleBtn.innerHTML = '&#8249;';
+    toggleBtn.style.position = 'fixed';
+    toggleBtn.style.top = '60px';
+    toggleBtn.style.right = '0';
+    toggleBtn.style.left = 'auto';
+    toggleBtn.style.bottom = 'auto';
+    toggleBtn.style.margin = '0';
+    toggleBtn.style.zIndex = '3100';
 
     // menuWrapper：語言選擇器和音樂控制上下排列，且本身就是響應式的主框
     if (document.getElementById('menuWrapper')) return;
     const menuWrapper = document.createElement('div');
     menuWrapper.id = 'menuWrapper';
-    menuWrapper.style.display = 'flex';
-    menuWrapper.style.flexDirection = 'column';
-    menuWrapper.style.alignItems = 'stretch';
-    menuWrapper.style.justifyContent = 'flex-start';
-    menuWrapper.style.height = 'auto';
-    menuWrapper.style.transition = 'transform 0.4s cubic-bezier(.4,2,.6,1)';
-    menuWrapper.style.transform = 'translateX(0)';
-    menuWrapper.style.background = 'rgba(255,255,255,0.95)';
-    menuWrapper.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-    menuWrapper.style.borderRadius = '10px';
-    menuWrapper.style.padding = '15px 10px';
-    menuWrapper.style.margin = '0';
-    menuWrapper.style.width = '100%';
-    menuWrapper.style.maxWidth = '320px';
+    menuWrapper.className = 'floating-control-panel';
     menuWrapper.style.position = 'fixed';
-menuWrapper.style.top = '60px';
-
-menuWrapper.style.right = '10px';
-menuWrapper.style.zIndex = '3000';
+    menuWrapper.style.top = '60px';
+    menuWrapper.style.right = '12px';
+    menuWrapper.style.left = 'auto';
+    menuWrapper.style.bottom = 'auto';
+    menuWrapper.style.margin = '0';
+    menuWrapper.style.zIndex = '3000';
+    menuWrapper.style.transform = 'translateX(0) scale(1)';
+    menuWrapper.style.alignSelf = 'auto';
 
     // 語言標籤
-    const langLabel = document.createElement('span');
+    const langGroup = document.createElement('div');
+    langGroup.className = 'music-control-group';
+
+    const langLabel = document.createElement('label');
+    langLabel.className = 'music-control-label';
+    langLabel.setAttribute('for', 'languageSelector');
     langLabel.textContent = t('languageSelector') + ': ';
-    langLabel.style.marginRight = '5px';
 
     // 語言下拉
     const langSelector = document.createElement('select');
     langSelector.id = 'languageSelector';
-    langSelector.style.padding = '5px';
-    langSelector.style.borderRadius = '5px';
+    langSelector.className = 'music-control-select';
 
     const languages = [
         { code: 'zh-Hant', name: '繁體中文' },
@@ -882,25 +764,12 @@ menuWrapper.style.zIndex = '3000';
 
     // 音樂控制面板
     const musicControls = createMusicControls();
+    langGroup.appendChild(langLabel);
+    langGroup.appendChild(langSelector);
+    menuWrapper.appendChild(langGroup);
+
     if (musicControls) {
-        musicControls.style.background = 'transparent';
-        musicControls.style.boxShadow = 'none';
-        musicControls.style.borderRadius = '0';
-        musicControls.style.padding = '0';
-        musicControls.style.margin = '0';
-        musicControls.style.width = '100%';
-        musicControls.style.maxWidth = 'none';
-        musicControls.style.flexDirection = 'row';
-        musicControls.style.gap = '12px';
-        musicControls.classList.add('music-controls');
-        musicControls.style.flexDirection = 'column';
-        // 直接 append 語言標籤、下拉和音樂控制到 menuWrapper
-        menuWrapper.appendChild(langLabel);
-        menuWrapper.appendChild(langSelector);
         menuWrapper.appendChild(musicControls);
-    } else {
-        menuWrapper.appendChild(langLabel);
-        menuWrapper.appendChild(langSelector);
     }
 
     let isCollapsed = false;
@@ -908,26 +777,27 @@ menuWrapper.style.zIndex = '3000';
         isCollapsed = !isCollapsed;
         if (isCollapsed) {
             toggleBtn.classList.add('collapsed');
-            
+            toggleBtn.setAttribute('aria-label', '展開設定選單');
+            toggleBtn.setAttribute('aria-expanded', 'false');
             menuWrapper.style.opacity = '0';
             menuWrapper.style.pointerEvents = 'none';
             menuWrapper.style.visibility = 'hidden';
-            toggleBtn.innerHTML = '&lt;';
+            menuWrapper.style.transform = 'translateX(24px) scale(0.98)';
+            toggleBtn.innerHTML = '&#8250;';
         } else {
-           toggleBtn.classList.remove('collapsed');
-            menuWrapper.style.transform = 'translateX(20)';
+            toggleBtn.classList.remove('collapsed');
+            toggleBtn.setAttribute('aria-label', '收合設定選單');
+            toggleBtn.setAttribute('aria-expanded', 'true');
+            menuWrapper.style.transform = 'translateX(0) scale(1)';
             menuWrapper.style.opacity = '1';
             menuWrapper.style.pointerEvents = 'auto';
             menuWrapper.style.visibility = 'visible';
-            toggleBtn.innerHTML = '&gt;';
+            toggleBtn.innerHTML = '&#8249;';
         }
     };
 
-   
-if (musicControls) menuWrapper.appendChild(musicControls);
-
-document.body.appendChild(menuWrapper);
-document.body.appendChild(toggleBtn);
+    document.body.appendChild(menuWrapper);
+    document.body.appendChild(toggleBtn);
 }
 function updateAllLabelsForLanguage(newLang) {
     currentLanguage = newLang;
