@@ -1,4 +1,4 @@
-let backgroundMusic = null;
+﻿let backgroundMusic = null;
 let isMusicPlaying = false ;
 let musicVolume = 0.3; // 預設音量 30%
 let currentMusicType = 'piano'; // 預設音樂類型
@@ -922,10 +922,11 @@ VOICE: [選擇的語音名稱，小寫]`;
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content, prayerText })
         });
+        const data = await response.json();
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(data?.detail || data?.error || `HTTP error! status: ${response.status}`);
         }
-        const groqData = await response.json();const data = await response.json();        if (!groqData?.choices?.[0]?.message?.content) {
+        if (!data?.content) {
             throw new Error('Invalid API response structure');
         }
         // 解析回應
@@ -1024,7 +1025,7 @@ async function getEmotionalVerse(emotion, isFirst = false) {
             })
         });
         const data = await response.json();
-if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+if (!response.ok) throw new Error(data?.detail || data?.error || `HTTP error! status: ${response.status}`);
 
 // 新增：支援 {prayer, scripture, explanation} 結構
 let prayerText = '', scripture = '', explanation = '';
